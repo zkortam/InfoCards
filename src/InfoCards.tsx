@@ -5,7 +5,7 @@ import {
   ResponseData,
   TContext
 } from '@incorta-org/component-sdk';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 interface Props {
   context: Context<TContext>;
@@ -43,6 +43,8 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const [showElseIf, setShowElseIf] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [disableConditions, setDisableConditions] = useState(disableConditionsDefault);
+
+  const colorInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const initialElseIfConditions: ElseIfCondition[] = [];
@@ -144,6 +146,14 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     setDisableConditions(!disableConditions);
   };
 
+  const handleColorChange = (color: string, setColor: React.Dispatch<React.SetStateAction<string>>) => {
+    setColor(color);
+  };
+
+  const openColorPicker = (ref: React.RefObject<HTMLInputElement>) => {
+    ref.current?.click();
+  };
+
   return (
     <div onContextMenu={handleRightClick} style={{ position: 'relative', padding: '20px' }}>
       <div style={{ 
@@ -212,156 +222,143 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
 
           <div style={{ marginBottom: '20px', textAlign: 'right', display: 'flex', alignItems: 'center' }}>
             <span>then color =</span>
-            <div style={{ 
-              height: '30px', 
-              width: '30px', 
-              borderRadius: '50%', 
-              border: '2px solid darkgrey', 
-              overflow: 'hidden', 
-              marginLeft: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <input 
-                type="color" 
-                value={conditionalColor} 
-                onChange={(e) => setConditionalColor(e.target.value)} 
-                style={{
-                  height: '100%', 
-                  width: '100%', 
-                  border: 'none', 
-                  padding: '0',
-                  cursor: 'pointer',
-                  borderRadius: '50%' // Ensures the color picker itself is circular
-                }}
-              />
-            </div>
+            <div 
+              onClick={() => openColorPicker(colorInputRef)}
+              style={{ 
+                height: '30px', 
+                width: '30px', 
+                borderRadius: '50%', 
+                border: '2px solid darkgrey', 
+                backgroundColor: conditionalColor,
+                marginLeft: '10px',
+                cursor: 'pointer'
+              }}
+            />
+            <input 
+              type="color" 
+              ref={colorInputRef}
+              value={conditionalColor} 
+              onChange={(e) => handleColorChange(e.target.value, setConditionalColor)} 
+              style={{ display: 'none' }}
+            />
           </div>
 
           {showElseIf && elseIfConditions.map((cond, index) => (
-            <div key={index} style={{ marginBottom: '20px', textAlign: 'right', position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-                <span>Else If Value</span>
-                <input 
-                  type="text" 
-                  value={cond.condition} 
-                  onChange={(e) => {
-                    const updatedConditions = [...elseIfConditions];
-                    updatedConditions[index].condition = e.target.value;
-                    setElseIfConditions(updatedConditions);
-                  }} 
-                  placeholder="Enter <, >, =, <=, >=" 
-                  style={{
-                    width: '40px',
-                    height: '30px',
-                    borderRadius: '15px',
-                    border: '2px solid darkgrey',
-                    padding: '0 10px',
-                    marginLeft: '10px',
-                    marginRight: '10px'
-                  }}
-                />
-                <input 
-                  type="number" 
-                  value={cond.threshold} 
-                  onChange={(e) => {
-                    const updatedConditions = [...elseIfConditions];
-                    updatedConditions[index].threshold = Number(e.target.value);
-                    setElseIfConditions(updatedConditions);
-                  }} 
-                  style={{
-                    height: '30px',
-                    borderRadius: '15px',
-                    border: '2px solid darkgrey',
-                    padding: '0 10px',
-                    marginRight: '10px',
-                    flexGrow: 1
-                  }}
-                />
-                {index === elseIfConditions.length - 1 && (
-                  <button 
-                    onClick={removeElseIfCondition} 
+            <React.Fragment key={index}>
+              <div style={{ height: '2px', backgroundColor: 'gray', borderRadius: '1px', margin: '20px 10px' }}></div>
+              <div style={{ marginBottom: '20px', textAlign: 'right', position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                  <span>Else If Value</span>
+                  <input 
+                    type="text" 
+                    value={cond.condition} 
+                    onChange={(e) => {
+                      const updatedConditions = [...elseIfConditions];
+                      updatedConditions[index].condition = e.target.value;
+                      setElseIfConditions(updatedConditions);
+                    }} 
+                    placeholder="Enter <, >, =, <=, >=" 
+                    style={{
+                      width: '40px',
+                      height: '30px',
+                      borderRadius: '15px',
+                      border: '2px solid darkgrey',
+                      padding: '0 10px',
+                      marginLeft: '10px',
+                      marginRight: '10px'
+                    }}
+                  />
+                  <input 
+                    type="number" 
+                    value={cond.threshold} 
+                    onChange={(e) => {
+                      const updatedConditions = [...elseIfConditions];
+                      updatedConditions[index].threshold = Number(e.target.value);
+                      setElseIfConditions(updatedConditions);
+                    }} 
                     style={{
                       height: '30px',
-                      width: '30px',
-                      fontSize: '24px',
-                      border: '2px solid red',
-                      borderRadius: '50%',
-                      backgroundColor: 'white',
-                      color: 'red',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                    -
-                  </button>
-                )}
-              </div>
+                      borderRadius: '15px',
+                      border: '2px solid darkgrey',
+                      padding: '0 10px',
+                      marginRight: '10px',
+                      flexGrow: 1
+                    }}
+                  />
+                  {index === elseIfConditions.length - 1 && (
+                    <button 
+                      onClick={removeElseIfCondition} 
+                      style={{
+                        height: '30px',
+                        width: '30px',
+                        fontSize: '24px',
+                        border: '2px solid red',
+                        borderRadius: '50%',
+                        backgroundColor: 'white',
+                        color: 'red',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                      -
+                    </button>
+                  )}
+                </div>
 
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span>then color =</span>
-                <div style={{ 
-                  height: '30px', 
-                  width: '30px', 
-                  borderRadius: '50%', 
-                  border: '2px solid darkgrey', 
-                  overflow: 'hidden', 
-                  marginLeft: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span>then color =</span>
+                  <div 
+                    onClick={() => openColorPicker(colorInputRef)}
+                    style={{ 
+                      height: '30px', 
+                      width: '30px', 
+                      borderRadius: '50%', 
+                      border: '2px solid darkgrey', 
+                      backgroundColor: cond.color,
+                      marginLeft: '10px',
+                      cursor: 'pointer'
+                    }}
+                  />
                   <input 
                     type="color" 
+                    ref={colorInputRef}
                     value={cond.color} 
                     onChange={(e) => {
                       const updatedConditions = [...elseIfConditions];
                       updatedConditions[index].color = e.target.value;
                       setElseIfConditions(updatedConditions);
                     }} 
-                    style={{
-                      height: '100%', 
-                      width: '100%', 
-                      border: 'none', 
-                      padding: '0',
-                      cursor: 'pointer',
-                      borderRadius: '50%' // Ensures the color picker itself is circular
-                    }}
+                    style={{ display: 'none' }}
                   />
                 </div>
               </div>
-            </div>
+            </React.Fragment>
           ))}
+
+          <div style={{ height: '2px', backgroundColor: 'gray', borderRadius: '1px', margin: '20px 10px' }}></div>
 
           <div style={{ marginBottom: '20px', textAlign: 'right', display: 'flex', alignItems: 'center' }}>
             <span>Else color =</span>
-            <div style={{ 
-              height: '30px', 
-              width: '30px', 
-              borderRadius: '50%', 
-              border: '2px solid darkgrey', 
-              overflow: 'hidden', 
-              marginLeft: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <input 
-                type="color" 
-                value={elseColor} 
-                onChange={(e) => setElseColor(e.target.value)} 
-                style={{
-                  height: '30px', 
-                  width: '30px', 
-                  border: 'none', 
-                  padding: '0px',
-                  cursor: 'Busy',
-                  borderRadius: '100px' // Ensures the color picker itself is circular
-                }}
-              />
-            </div>
+            <div 
+              onClick={() => openColorPicker(colorInputRef)}
+              style={{ 
+                height: '30px', 
+                width: '30px', 
+                borderRadius: '50%', 
+                border: '2px solid darkgrey', 
+                backgroundColor: elseColor,
+                marginLeft: '10px',
+                cursor: 'pointer'
+              }}
+            />
+            <input 
+              type="color" 
+              ref={colorInputRef}
+              value={elseColor} 
+              onChange={(e) => setElseColor(e.target.value)} 
+              style={{ display: 'none' }}
+            />
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
