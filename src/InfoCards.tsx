@@ -44,7 +44,9 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const [showSettings, setShowSettings] = useState(false);
   const [disableConditions, setDisableConditions] = useState(disableConditionsDefault);
 
-  const colorInputRef = useRef<HTMLInputElement | null>(null);
+  const colorInputRef = useRef<HTMLInputElement>(null);
+  const elseColorInputRef = useRef<HTMLInputElement>(null);
+  const conditionalColorInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     const initialElseIfConditions: ElseIfCondition[] = [];
@@ -126,6 +128,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
         ...elseIfConditions,
         { condition: ">", threshold: 0, color: "#000000" }
       ]);
+      conditionalColorInputRefs.current.push(null); // Add new ref for the new condition
     }
   };
 
@@ -134,6 +137,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       const updatedConditions = [...elseIfConditions];
       updatedConditions.pop();
       setElseIfConditions(updatedConditions);
+      conditionalColorInputRefs.current.pop(); // Remove the ref for the removed condition
     }
   };
 
@@ -150,8 +154,16 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     setColor(color);
   };
 
-  const openColorPicker = (ref: React.RefObject<HTMLInputElement>) => {
-    ref.current?.click();
+  const openColorPicker = (ref: HTMLInputElement | null) => {
+    if (ref) {
+      ref.click();
+    }
+  };
+
+  const handleElseIfColorChange = (index: number, color: string) => {
+    const updatedConditions = [...elseIfConditions];
+    updatedConditions[index].color = color;
+    setElseIfConditions(updatedConditions);
   };
 
   return (
@@ -190,21 +202,24 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
 
           <div style={{ marginBottom: '20px', textAlign: 'right', display: 'flex', alignItems: 'center' }}>
             <span>If Value</span>
-            <input 
-              type="text" 
+            <select 
               value={condition} 
               onChange={(e) => setCondition(e.target.value)} 
-              placeholder="Enter <, >, =, <=, >=" 
               style={{
-                width: '40px',
+                width: '55px',
                 height: '30px',
                 borderRadius: '15px',
                 border: '2px solid darkgrey',
                 padding: '0 10px',
                 marginLeft: '10px',
                 marginRight: '10px'
-              }}
-            />
+              }}>
+              <option value=">">&gt;</option>
+              <option value="<">&lt;</option>
+              <option value="=">=</option>
+              <option value=">=">&gt;=</option>
+              <option value="<=">&lt;=</option>
+            </select>
             <input 
               type="number" 
               value={threshold} 
@@ -223,7 +238,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
           <div style={{ marginBottom: '20px', textAlign: 'right', display: 'flex', alignItems: 'center' }}>
             <span>then color =</span>
             <div 
-              onClick={() => openColorPicker(colorInputRef)}
+              onClick={() => openColorPicker(colorInputRef.current)}
               style={{ 
                 height: '30px', 
                 width: '30px', 
@@ -249,25 +264,28 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               <div style={{ marginBottom: '20px', textAlign: 'right', position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
                   <span>Else If Value</span>
-                  <input 
-                    type="text" 
+                  <select 
                     value={cond.condition} 
                     onChange={(e) => {
                       const updatedConditions = [...elseIfConditions];
                       updatedConditions[index].condition = e.target.value;
                       setElseIfConditions(updatedConditions);
                     }} 
-                    placeholder="Enter <, >, =, <=, >=" 
                     style={{
-                      width: '40px',
+                      width: '55px',
                       height: '30px',
                       borderRadius: '15px',
                       border: '2px solid darkgrey',
                       padding: '0 10px',
                       marginLeft: '10px',
                       marginRight: '10px'
-                    }}
-                  />
+                    }}>
+                    <option value=">">&gt;</option>
+                    <option value="<">&lt;</option>
+                    <option value="=">=</option>
+                    <option value=">=">&gt;=</option>
+                    <option value="<=">&lt;=</option>
+                  </select>
                   <input 
                     type="number" 
                     value={cond.threshold} 
@@ -309,7 +327,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <span>then color =</span>
                   <div 
-                    onClick={() => openColorPicker(colorInputRef)}
+                    onClick={() => openColorPicker(conditionalColorInputRefs.current[index])}
                     style={{ 
                       height: '30px', 
                       width: '30px', 
@@ -322,13 +340,9 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                   />
                   <input 
                     type="color" 
-                    ref={colorInputRef}
+                    ref={(el) => (conditionalColorInputRefs.current[index] = el)}
                     value={cond.color} 
-                    onChange={(e) => {
-                      const updatedConditions = [...elseIfConditions];
-                      updatedConditions[index].color = e.target.value;
-                      setElseIfConditions(updatedConditions);
-                    }} 
+                    onChange={(e) => handleElseIfColorChange(index, e.target.value)} 
                     style={{ display: 'none' }}
                   />
                 </div>
@@ -341,7 +355,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
           <div style={{ marginBottom: '20px', textAlign: 'right', display: 'flex', alignItems: 'center' }}>
             <span>Else color =</span>
             <div 
-              onClick={() => openColorPicker(colorInputRef)}
+              onClick={() => openColorPicker(elseColorInputRef.current)}
               style={{ 
                 height: '30px', 
                 width: '30px', 
@@ -354,7 +368,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
             />
             <input 
               type="color" 
-              ref={colorInputRef}
+              ref={elseColorInputRef}
               value={elseColor} 
               onChange={(e) => setElseColor(e.target.value)} 
               style={{ display: 'none' }}
