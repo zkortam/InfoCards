@@ -1,75 +1,88 @@
-import {
-  AppliedPrompts,
-  Context,
-  onDrillDownFunction,
-  ResponseData,
-  TContext
-} from '@incorta-org/component-sdk';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { vi } from 'vitest';
+import { render } from '@testing-library/react';
+import InfoCards from './InfoCards';
+import { Context, ResponseData, TContext } from '@incorta-org/component-sdk';
 
-interface Props {
-  context: Context<TContext>;
-  prompts: AppliedPrompts;
-  data: ResponseData;
-  drillDown: onDrillDownFunction;
-}
-
-const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
-  const settings = context.settings || {};
-
-  const interiorColor = settings.containerColor || "#000000";
-  const interiorOpacity = settings.containerOpacity ? settings.containerOpacity / 100 : 1;
-  const borderColor = settings.borderColor || "#000000";
-  const borderOpacity = settings.borderOpacity ? settings.borderOpacity / 100 : 1;
-  const borderThickness = settings.borderThickness || 1;
-  const borderRadius = settings.borderRadius || 0;
-  const title = settings.title || "Title";
-  const titleColor = settings.titleColor || "#FFFFFF";
-  const valueColor = settings.valueColor || "teal";
-
-  const [value, setValue] = useState("0");
-
-  useEffect(() => {
-    if (data.data.length > 0) {
-      const rawValue = data.data[0][0]?.value || "0";
-      setValue(rawValue);
+const exampleContext: Context<TContext> = {
+  app: {
+    color_palette: [],
+    features: {},
+    loginInfo: {},
+    locale: {
+      locale: 'en',
+      formatMessage(key) {
+        return '';
+      }
     }
-  }, [data]);
-
-  const parseColor = (color: string, opacity: number) => {
-    const hex = color.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-  };
-
-  const formatValue = (num: number) => {
-    if (num < 1000000) {
-      return num.toLocaleString();
-    } else {
-      return (num / 1000000).toFixed(3) + 'M';
-    }
-  };
-
-  return (
-    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-      <div style={{ 
-        width: '150px', 
-        height: '120px', 
-        backgroundColor: parseColor(interiorColor, interiorOpacity), 
-        display: 'flex', 
-        flexDirection: 'column', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        borderRadius: `${borderRadius}px`,
-        border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`
-      }}>
-        <span style={{ color: titleColor, fontSize: '14pt' }}>{title}</span>
-        <span style={{ color: valueColor, fontSize: '24pt', marginTop: '10px' }}>{formatValue(parseInt(value, 10))}</span>
-      </div>
-    </div>
-  );
+  },
+  component: {
+    dimensions: {
+      width: 862,
+      height: 1070
+    },
+    settings: {
+      key1: true
+    },
+    bindings: {
+      'tray-key': [
+        {
+          id: 'h-06D4X-Svy',
+          name: 'Cost',
+          field: {
+            column: 'SALES.SALES.COST_OF_GOODS',
+            datatype: 'double',
+            supportHierarchy: false,
+            function: 'measure'
+          },
+          settings: {}
+        }
+      ]
+    },
+    id: 'e95dafdc-bf08-451f-bb0d-f451496e22d4',
+    version: '0.0.1',
+    numberOfElementsInRow: 1,
+    widthScale: 1,
+    automaticHeight: 0
+  }
 };
 
-export default InfoCards;
+const exampleData: ResponseData = {
+  isSampled: false,
+  subqueryComplete: true,
+  rowHeaders: [],
+  measureHeaders: [
+    {
+      label: 'Cost',
+      dataType: 'double',
+      id: 'h-06D4X-Svy',
+      index: 0
+    }
+  ],
+  data: [
+    [
+      {
+        value: '1670.79',
+        formatted: '1,670.79'
+      }
+    ]
+  ],
+  isAggregated: false,
+  startRow: 0,
+  endRow: 1000,
+  totalRows: 918843,
+  complete: false,
+  raw: false
+};
+
+describe('<InfoCards />', () => {
+  it('should render Hello Incorta Component', () => {
+    let drilldown = vi.fn();
+
+    let { getByText } = render(
+      <InfoCards context={exampleContext} data={exampleData} drillDown={drilldown} prompts={{}} />
+    );
+
+    expect(getByText(/Hello Incorta Component/i)).toBeInTheDocument();
+  });
+});

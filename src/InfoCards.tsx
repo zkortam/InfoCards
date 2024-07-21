@@ -245,7 +245,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               value={condition} 
               onChange={(e) => setCondition(e.target.value)} 
               style={{
-                width: '40px',
+                width: '55px',
                 height: '30px',
                 borderRadius: '15px',
                 border: '2px solid darkgrey',
@@ -311,7 +311,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                       setElseIfConditions(updatedConditions);
                     }} 
                     style={{
-                      width: '40px',
+                      width: '55px',
                       height: '30px',
                       borderRadius: '15px',
                       border: '2px solid darkgrey',
