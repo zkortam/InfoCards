@@ -5,15 +5,84 @@
   "settings": [
     {
       "name": {
-        "key": "group"
+        "key": "Display Settings"
       },
       "settings": [
         {
           "name": {
-            "key": "setting"
+            "key": "Title"
           },
-          "key": "key1",
-          "type": "boolean"
+          "key": "title",
+          "type": "text",
+          "hint": "Enter the title text"
+        },
+        {
+          "name": {
+            "key": "Title Color"
+          },
+          "key": "titleColor",
+          "type": "color",
+          "hint": "Select the title color"
+        },
+        {
+          "name": {
+            "key": "Value Color"
+          },
+          "key": "valueColor",
+          "type": "color",
+          "hint": "Select the value color"
+        },
+        {
+          "name": {
+            "key": "Container Color"
+          },
+          "key": "containerColor",
+          "type": "color",
+          "hint": "Select the container color"
+        },
+        {
+          "name": {
+            "key": "Container Opacity"
+          },
+          "key": "containerOpacity",
+          "type": "number",
+          "min": 1,
+          "max": 100,
+          "hint": "Select the container opacity (1-100)"
+        },
+        {
+          "name": {
+            "key": "Border Color"
+          },
+          "key": "borderColor",
+          "type": "color",
+          "hint": "Select the border color"
+        },
+        {
+          "name": {
+            "key": "Border Opacity"
+          },
+          "key": "borderOpacity",
+          "type": "number",
+          "min": 1,
+          "max": 100,
+          "hint": "Select the border opacity (1-100)"
+        },
+        {
+          "name": {
+            "key": "Border Thickness"
+          },
+          "key": "borderThickness",
+          "type": "number",
+          "hint": "Select the border thickness"
+        },
+        {
+          "name": {
+            "key": "Corner Rounding"
+          },
+          "key": "borderRadius",
+          "type": "number",
+          "hint": "Select the corner rounding"
         }
       ]
     }
