@@ -166,11 +166,18 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     setElseIfConditions(updatedConditions);
   };
 
+  const getConditionLabel = (value: number) => {
+    if (checkCondition(value, ">", threshold)) return "High";
+    if (checkCondition(value, "<", threshold)) return "Low";
+    if (checkCondition(value, "=", threshold) || checkCondition(value, ">=", threshold) || checkCondition(value, "<=", threshold)) return "Med";
+    return "None";
+  };
+
   return (
     <div onContextMenu={handleRightClick} style={{ position: 'relative', padding: '20px' }}>
       <div style={{ 
-        width: '150px', 
-        height: '120px', 
+        width: '200px',  // Adjusted width for spacing
+        height: '140px',  // Adjusted height for spacing
         backgroundColor: parseColor(interiorColor, interiorOpacity), 
         display: 'flex', 
         flexDirection: 'column', 
@@ -178,17 +185,49 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
         alignItems: 'center', 
         borderRadius: `${borderRadius}px`,
         border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
-        cursor: 'pointer'
+        cursor: 'pointer',
+        position: 'relative' // Ensure the absolute positioning of the inner elements is relative to this container
       }}>
-        <span style={{ color: titleColor, fontSize: '14pt' }}>{title}</span>
-        <span style={{ color: getValueColor(value), fontSize: '24pt', marginTop: '10px' }}>{formatValue(value)}</span>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          width: '100%', 
+          position: 'absolute', 
+          top: '5px', 
+          left: '0px',  // Positioned 5px from the left border
+          padding: '0 10px'
+        }}>
+          <div style={{
+            backgroundColor: getValueColor(value),
+            borderRadius: `${borderRadius}px`,
+            padding: '5px 10px',
+            color: '#FFF',
+            fontSize: '12px'
+          }}>
+            {getConditionLabel(value)}
+          </div>
+          <div>
+          </div>
+        </div>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          justifyContent: 'center', 
+          alignItems: 'flex-end', 
+          width: '100%', 
+          padding: '10px',
+          paddingRight: '20px'  // Added 10px spacing to the right
+        }}>
+          <span style={{ color: titleColor, fontSize: '14px', marginBottom: '5px' }}>{title}</span>
+          <span style={{ color: getValueColor(value), fontSize: '24pt' }}>{formatValue(value)}</span>
+        </div>
       </div>
 
       {showSettings && (
         <div style={{ 
           position: 'absolute', 
           top: '0', 
-          left: '170px', 
+          left: '220px',  // Moved 50px to the right
           backgroundColor: 'white', 
           padding: '20px', 
           borderRadius: '10px', 
@@ -206,7 +245,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               value={condition} 
               onChange={(e) => setCondition(e.target.value)} 
               style={{
-                width: '55px',
+                width: '40px',
                 height: '30px',
                 borderRadius: '15px',
                 border: '2px solid darkgrey',
@@ -272,7 +311,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                       setElseIfConditions(updatedConditions);
                     }} 
                     style={{
-                      width: '55px',
+                      width: '40px',
                       height: '30px',
                       borderRadius: '15px',
                       border: '2px solid darkgrey',
