@@ -83,6 +83,15 @@
           "key": "borderRadius",
           "type": "number",
           "hint": "Select the corner rounding"
+        },
+        {
+          "name": {
+            "key": "Card Spacing"
+          },
+          "key": "cardSpacing",
+          "type": "number",
+          "hint": "Select the spacing between cards (px)",
+          "default": 10
         }
       ]
     }
