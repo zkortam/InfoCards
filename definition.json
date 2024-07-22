@@ -94,7 +94,24 @@
         "key": "tray"
       },
       "queryRole": "measure",
-      "minCount": 1
+      "minCount": 1,
+      "settings": [
+        {
+          "name": "Conditional Formatting",
+          "settings": [
+            {
+              "name": "Conditions",
+              "key": "conditions",
+              "type": "conditional-formatting",
+              "uiControlOptions": {
+                "labels": {
+                  "backgroundColor": "Progress bar"
+                }
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
