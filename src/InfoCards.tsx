@@ -22,6 +22,7 @@ interface ElseIfCondition {
 
 const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const settings = context?.component?.settings;
+  const conditionalFormatting = context?.component?.bindings?.["tray-key"]?.[0]?.settings?.conditions || [];
 
   const interiorColor = settings?.containerColor || "#000000";
   const interiorOpacity = settings?.containerOpacity ? settings.containerOpacity / 100 : 1;
@@ -111,14 +112,13 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       return valueColor;
     }
 
-    if (checkCondition(value, condition, threshold)) {
-      return conditionalColor;
-    }
-    for (const elseIf of elseIfConditions) {
-      if (checkCondition(value, elseIf.condition, elseIf.threshold)) {
-        return elseIf.color;
+    for (const cond of conditionalFormatting) {
+      const { operator, value: threshold, backgroundColor } = cond;
+      if (checkCondition(value, operator, threshold)) {
+        return backgroundColor;
       }
     }
+
     return elseColor;
   };
 
@@ -167,9 +167,14 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   };
 
   const getConditionLabel = (value: number) => {
-    if (checkCondition(value, ">", threshold)) return "High";
-    if (checkCondition(value, "<", threshold)) return "Low";
-    if (checkCondition(value, "=", threshold) || checkCondition(value, ">=", threshold) || checkCondition(value, "<=", threshold)) return "Med";
+    for (const cond of conditionalFormatting) {
+      const { operator, value: threshold } = cond;
+      if (checkCondition(value, operator, threshold)) {
+        if (checkCondition(value, ">", threshold)) return "High";
+        if (checkCondition(value, "<", threshold)) return "Low";
+        if (checkCondition(value, "=", threshold) || checkCondition(value, ">=", threshold) || checkCondition(value, "<=", threshold)) return "Med";
+      }
+    }
     return "None";
   };
 
