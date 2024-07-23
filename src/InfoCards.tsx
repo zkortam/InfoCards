@@ -13,6 +13,12 @@ interface Condition {
   color: string;
 }
 
+interface Binding {
+  settings: {
+    conditions: Condition[];
+  };
+}
+
 interface Props {
   context: Context<TContext>;
   prompts: AppliedPrompts;
@@ -30,23 +36,30 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const borderOpacity = settings?.borderOpacity ? settings.borderOpacity / 100 : 1;
   const borderThickness = settings?.borderThickness || 1;
   const borderRadius = settings?.borderRadius || 10;
-  const title = settings?.title || "Title";
+  const defaultTitle = settings?.title || "Data";
   const titleColor = settings?.titleColor || "#FFFFFF";
   const valueColor = settings?.valueColor || "#FFFFFF"; // Extract value color from settings
   const cardSpacing = settings?.cardSpacing || 10; // Extract card spacing from settings, default to 10px
 
   const [values, setValues] = useState<number[]>([]);
+  const [titles, setTitles] = useState<string[]>([]);
   const [conditions, setConditions] = useState<Condition[][]>([]);
 
   useEffect(() => {
     if (data.data.length > 0) {
       const rawValues = data.data[0].map(item => item.value || 0);
       const numericValues = rawValues.map(rawValue => typeof rawValue === 'string' ? parseFloat(rawValue) : rawValue);
-      setValues(numericValues.slice(0, 10)); // Ensure up to 6 values
+      setValues(numericValues.slice(0, 10)); // Ensure up to 10 values
+
+      const headers = data.measureHeaders.map(header => {
+        const parts = header.label.split('.');
+        return parts[parts.length - 1] || defaultTitle;
+      });
+      setTitles(headers.slice(0, 10)); // Ensure up to 10 titles
 
       const extractedConditions = numericValues.map((_, index) => {
-        const bindingConditions = context?.component?.bindings?.["tray-key"]?.[index]?.settings?.conditions || [];
-        return bindingConditions;
+        const binding = (context?.component?.bindings?.["tray-key"]?.[index] as unknown as Binding);
+        return binding?.settings?.conditions || [];
       });
       setConditions(extractedConditions);
     }
@@ -60,7 +73,11 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
   };
 
-  const formatValue = (num: number) => Math.round(num).toLocaleString();
+  const formatNumber = (num: number) => {
+    if (num >= 1e6) return (num / 1e6).toFixed(3).replace(/\.?0+$/, '') + 'M';
+    if (num >= 1e3) return (num / 1e3).toFixed(3).replace(/\.?0+$/, '') + 'K';
+    return num.toString();
+  };
 
   const getConditionLabel = (value: number, index: number) => {
     const sortedConditions = conditions[index]?.sort((a, b) => parseFloat(a.value) - parseFloat(b.value)) || [];
@@ -125,9 +142,33 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     <div style={{ display: 'flex', gap: `${cardSpacing}px`, flexWrap: 'wrap' }}>
       {values.map((value, index) => {
         const conditionLabel = getConditionLabel(value, index);
+        const title = titles[index] || defaultTitle;
+        let cardWidth = 140;
+        const titleLength = title.length;
+
+        if (conditionLabel) {
+          if (titleLength > 12) {
+            cardWidth += 20;
+          }
+          if (titleLength >= 16) {
+            cardWidth += 10;
+          }
+        } else {
+          if (titleLength > 11) {
+            cardWidth += 5;
+          }
+          if (titleLength >= 16) {
+            cardWidth += 10;
+          }
+        }
+
+        if (cardWidth > 190) {
+          cardWidth = 190; // Limit the maximum width to 190px
+        }
+
         return (
           <div key={index} style={{
-            width: '150px',
+            width: `${cardWidth}px`,
             height: '110px',
             backgroundColor: parseColor(interiorColor, interiorOpacity),
             display: 'flex',
@@ -137,17 +178,17 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
             borderRadius: `${borderRadius}px`,
             border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
             cursor: 'pointer',
-            position: 'relative'
+            position: 'relative',
+            padding: '0 10px', // Add padding to ensure a buffer when there is no condition label
           }}>
             {conditionLabel && (
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
+                justifyContent: 'flex-start',
                 width: '100%',
                 position: 'absolute',
-                top: '5px',
-                left: '0px',
-                padding: '0 10px'
+                top: '10px', // Add top padding for even spacing
+                left: '10px', // Ensure at least 10px space from the left border
               }}>
                 <div style={{
                   backgroundColor: getValueColor(value, index),
@@ -164,13 +205,13 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
-              alignItems: 'flex-end',
+              alignItems: conditionLabel ? 'flex-end' : 'center', // Align text based on the presence of the condition label
               width: '100%',
-              padding: '10px',
-              paddingRight: '20px'
+              textAlign: conditionLabel ? 'left' : 'center', // Adjust text alignment
+              padding: conditionLabel ? '10px 20px 10px 10px' : '10px 5px', // Adjust padding based on the presence of the condition label and 5px for no condition label
             }}>
               <span style={{ color: titleColor, fontSize: '14px', marginBottom: '5px' }}>{title}</span>
-              <span style={{ color: getValueColor(value, index), fontSize: '24pt' }}>{formatValue(value)}</span>
+              <span style={{ color: getValueColor(value, index), fontSize: '24pt' }}>{formatNumber(value)}</span>
             </div>
           </div>
         );
