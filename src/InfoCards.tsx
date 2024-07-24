@@ -50,7 +50,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     const dimensionLabels = data.data.map(row => row[0].value); // Assuming first column is dimension
     setGroupLabels(dimensionLabels);
 
-    const numberOfLists = Math.min(data.measureHeaders.length, 10); // Max of 10 lists
+    const numberOfLists = Math.min(data.measureHeaders.length, 50); // Max of 50 lists
     const initialLists: number[][] = Array.from({ length: numberOfLists }, (_, i) =>
       data.data.map(row => Number(row[i + 1].value)) // Assuming the first column is the dimension
     );
@@ -58,17 +58,17 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     // Safeguard: Check if initialLists are valid, otherwise set to 0
     initialLists.forEach((list, index) => {
       if (list.length === 0 || list.every(point => point === 0)) {
-        initialLists[index] = Array(10).fill(0); // Set to 10 zero values as a safeguard
+        initialLists[index] = Array(50).fill(0); // Set to 50 zero values as a safeguard
       }
     });
 
-    setLists(initialLists.map(list => list.slice(0, 10))); // Ensure up to 10 values per list
+    setLists(initialLists.map(list => list.slice(0, 50))); // Ensure up to 50 values per list
 
     const headers = data.measureHeaders.map(header => {
       const parts = header.label.split('.');
       return parts[parts.length - 1] || defaultTitle;
     });
-    setTitles(headers.slice(0, 10)); // Ensure up to 10 titles
+    setTitles(headers.slice(0, 50)); // Ensure up to 50 titles
 
     const extractedConditions = initialLists[0].map((_, index) => {
       const binding = (context?.component?.bindings?.["tray-key"]?.[index] as unknown as Binding);
@@ -86,10 +86,20 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   };
 
   const formatNumber = (num: number) => {
-    if (num >= 1e9) return (num / 1e9).toFixed(2).replace(/\.?0+$/, '') + 'B';
-    if (num >= 1e6) return (num / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M';
-    if (num >= 1e3) return (num / 1e3).toFixed(2).replace(/\.?0+$/, '') + 'K';
-    return num.toFixed(2).replace(/\.?0+$/, ''); // Ensure 2 decimal places
+    const absNum = Math.abs(num);
+    let formattedNum;
+
+    if (absNum >= 1e9) {
+      formattedNum = (num / 1e9).toFixed(2) + 'B';
+    } else if (absNum >= 1e6) {
+      formattedNum = (num / 1e6).toFixed(2) + 'M';
+    } else if (absNum >= 1e3) {
+      formattedNum = (num / 1e3).toFixed(2) + 'K';
+    } else {
+      formattedNum = num.toFixed(2);
+    }
+
+    return formattedNum.replace(/(\.0+|0+)$/, ''); // Remove unnecessary trailing zeros
   };
 
   const getConditionLabel = (value: number, index: number) => {
