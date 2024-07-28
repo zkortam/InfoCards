@@ -1,7 +1,7 @@
 {
   "icon": "./assets/icon.svg",
   "name": "InfoCards",
-  "hint": "Display numerical information",
+  "hint": "Drag one item to 'BreakBy' for grouped lists (e.g., [49, 54, 695]).\nDrag two items for individual numbers (e.g., 59).",
   "options": {
     "aggregation": true,
     "individualFilter": true,
