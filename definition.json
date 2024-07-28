@@ -97,6 +97,14 @@
           "type": "number",
           "hint": "Select the spacing between cards (px)",
           "default": 10
+        },
+        {
+          "name": {
+            "key": "Icon URL"
+          },
+          "key": "iconUrl",
+          "type": "text",
+          "hint": "Enter the URL of the icon image"
         }
       ]
     }
