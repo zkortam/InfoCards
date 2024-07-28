@@ -6,6 +6,7 @@ import {
   ResponseData,
   TContext
 } from '@incorta-org/component-sdk';
+import IconPicker from './IconPicker';  // Import the IconPicker component
 
 interface Condition {
   value: string;
@@ -26,6 +27,11 @@ interface Props {
   drillDown: onDrillDownFunction;
 }
 
+interface IconSettings {
+  icon: string;
+  color: string;
+}
+
 const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const settings = context?.component?.settings;
   const breakByTrayItems = context?.component?.bindings?.["tray-key-dim"] || [];
@@ -39,40 +45,44 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const borderRadius = settings?.borderRadius || 10;
   const defaultTitle = settings?.title || "Data";
   const titleColor = settings?.titleColor || "#FFFFFF";
-  const valueColor = settings?.valueColor || "#FFFFFF"; // Extract value color from settings
-  const cardSpacing = settings?.cardSpacing || 10; // Extract card spacing from settings, default to 10px
+  const valueColor = settings?.valueColor || "#FFFFFF";
+  const cardSpacing = settings?.cardSpacing || 10;
 
   const [lists, setLists] = useState<number[][]>([]);
   const [titles, setTitles] = useState<string[]>([]);
   const [conditions, setConditions] = useState<Condition[][]>([]);
-  const [groupLabels, setGroupLabels] = useState<string[]>([]); // New state for group labels
+  const [groupLabels, setGroupLabels] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
+  const [icons, setIcons] = useState<IconSettings[]>(Array(50).fill({ icon: '', color: '#000000' })); // Updated to store icon and color
+
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
+  const [iconPickerVisible, setIconPickerVisible] = useState(false);
+  const [pickerLeftPosition, setPickerLeftPosition] = useState<number>(0); // State to track left position of picker
+  const [currentColor, setCurrentColor] = useState<string>('#000000'); // State to track current color
 
   useEffect(() => {
     if (breakByTrayItems.length === 1) {
-      // Mode 1: Group by "BreakBy" item and display lists of values
-      const dimensionLabels = data.data.map(row => row[0].value); // Assuming first column is dimension
+      const dimensionLabels = data.data.map(row => row[0].value);
       setGroupLabels(dimensionLabels);
 
-      const numberOfLists = Math.min(data.measureHeaders.length, 50); // Max of 50 lists
+      const numberOfLists = Math.min(data.measureHeaders.length, 50);
       const initialLists: number[][] = Array.from({ length: numberOfLists }, (_, i) =>
-        data.data.map(row => Number(row[i + 1].value)) // Assuming the first column is the dimension
+        data.data.map(row => Number(row[i + 1].value))
       );
 
-      // Safeguard: Check if initialLists are valid, otherwise set to 0
       initialLists.forEach((list, index) => {
         if (list.length === 0 || list.every(point => point === 0)) {
-          initialLists[index] = Array(50).fill(0); // Set to 50 zero values as a safeguard
+          initialLists[index] = Array(50).fill(0);
         }
       });
 
-      setLists(initialLists.map(list => list.slice(0, 50))); // Ensure up to 50 values per list
+      setLists(initialLists.map(list => list.slice(0, 50)));
 
       const headers = data.measureHeaders.map(header => {
         const parts = header.label.split('.');
         return parts[parts.length - 1] || defaultTitle;
       });
-      setTitles(headers.slice(0, 50)); // Ensure up to 50 titles
+      setTitles(headers.slice(0, 50));
 
       const extractedConditions = initialLists.map((_, index) => {
         const binding = (context?.component?.bindings?.["tray-key"]?.[index] as unknown as Binding);
@@ -80,17 +90,16 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       });
       setConditions(extractedConditions);
     } else if (breakByTrayItems.length === 2) {
-      // Mode 2: No grouping, display individual values, disregard "BreakBy" tray
       if (data.data.length > 0) {
         const measureValues = data.data.map(row => row.map(item => item.value || 0));
         const numericValues = measureValues.flat().map(rawValue => typeof rawValue === 'string' ? parseFloat(rawValue) : rawValue);
-        setValues(numericValues.slice(0, 10)); // Ensure up to 10 values
+        setValues(numericValues.slice(0, 10));
 
         const headers = data.measureHeaders.map(header => {
           const parts = header.label.split('.');
           return parts[parts.length - 1] || defaultTitle;
         });
-        setTitles(headers.slice(0, 10)); // Ensure up to 10 titles
+        setTitles(headers.slice(0, 10));
 
         const extractedConditions = numericValues.map((_, index) => {
           const binding = (context?.component?.bindings?.["tray-key"]?.[index] as unknown as Binding);
@@ -112,14 +121,14 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const formatNumber = (num: number) => {
     if (num >= 1e6) return (num / 1e6).toFixed(3).replace(/\.?0+$/, '') + 'M';
     if (num >= 1e3) return (num / 1e3).toFixed(3).replace(/\.?0+$/, '') + 'K';
-    return num.toFixed(2).replace(/\.?0+$/, ''); // Ensure two decimal places for smaller numbers
+    return num.toFixed(2).replace(/\.?0+$/, '');
   };
 
   const getConditionLabel = (value: number, index: number) => {
     const sortedConditions = conditions[index]?.sort((a, b) => parseFloat(a.value) - parseFloat(b.value)) || [];
     if (!sortedConditions.length) return null;
 
-    let appliedColor = valueColor; // Default to valueColor if no conditions
+    let appliedColor = valueColor;
 
     for (const condition of sortedConditions) {
       const threshold = parseFloat(condition.value);
@@ -148,11 +157,11 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     const indexColor = sortedConditions.map(cond => cond.color).indexOf(appliedColor);
     const numColors = sortedConditions.length;
 
-    if (numColors === 1) return "Med"; // Only one condition
-    if (numColors % 2 === 0) { // Even number of conditions
+    if (numColors === 1) return "Med";
+    if (numColors % 2 === 0) {
       if (indexColor < numColors / 2) return "Low";
       return "High";
-    } else { // Odd number of conditions
+    } else {
       const third = Math.floor(numColors / 3);
       if (indexColor < third) return "Low";
       if (indexColor >= third * 2) return "High";
@@ -162,7 +171,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
 
   const getValueColor = (value: number, index: number) => {
     const sortedConditions = conditions[index]?.sort((a, b) => parseFloat(a.value) - parseFloat(b.value)) || [];
-    if (!sortedConditions.length) return valueColor; // Use valueColor if no conditions
+    if (!sortedConditions.length) return valueColor;
     for (const condition of sortedConditions) {
       const threshold = parseFloat(condition.value);
       if (condition.op === '<' && value < threshold) return condition.color;
@@ -171,7 +180,45 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       if (condition.op === '<=' && value <= threshold) return condition.color;
       if (condition.op === '>=' && value >= threshold) return condition.color;
     }
-    return valueColor; // Use valueColor if no conditions match
+    return valueColor;
+  };
+
+  const handleCardRightClick = (index: number, event: React.MouseEvent) => {
+    event.preventDefault();
+    setSelectedCardIndex(index);
+    setPickerLeftPosition(event.currentTarget.getBoundingClientRect().left); // Calculate left position of the card
+    setCurrentColor(icons[index].color); // Set the current color to the color of the selected icon
+    setIconPickerVisible(true);
+  };
+
+  const handleIconPick = (icon: string, color: string) => {
+    if (selectedCardIndex !== null) {
+      const newIcons = [...icons];
+      newIcons[selectedCardIndex] = { icon, color };
+      setIcons(newIcons);
+      setIconPickerVisible(false);
+      setSelectedCardIndex(null);
+    }
+  };
+
+  const handleColorChange = (color: string) => {
+    if (selectedCardIndex !== null) {
+      const newIcons = [...icons];
+      if (newIcons[selectedCardIndex].icon) {
+        newIcons[selectedCardIndex].color = color;
+        setIcons(newIcons);
+      }
+    }
+  };
+
+  const handleRemoveIcon = () => {
+    if (selectedCardIndex !== null) {
+      const newIcons = [...icons];
+      newIcons[selectedCardIndex] = { icon: '', color: '#000000' };
+      setIcons(newIcons);
+      setIconPickerVisible(false);
+      setSelectedCardIndex(null);
+    }
   };
 
   const renderGroupedCards = () => (
@@ -185,10 +232,11 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
           )}
           <div style={{ display: 'flex', gap: `${cardSpacing}px`, flexWrap: 'wrap' }}>
             {lists.map((list, listIndex) => {
-              if (indexGroup >= list.length) return null; // Skip if index exceeds list length
+              if (indexGroup >= list.length) return null;
               const value = list[indexGroup];
               const conditionLabel = getConditionLabel(value, listIndex);
               const title = titles[listIndex] || defaultTitle;
+              const { icon, color } = icons[listIndex];
               let cardWidth = 140;
               const titleLength = title.length;
 
@@ -209,35 +257,44 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               }
 
               if (cardWidth > 190) {
-                cardWidth = 190; // Limit the maximum width to 190px
+                cardWidth = 190;
               }
 
               return (
-                <div key={`${listIndex}-${indexGroup}`} style={{
-                  width: `${cardWidth}px`,
-                  height: '110px',
-                  backgroundColor: parseColor(interiorColor, interiorOpacity),
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderRadius: `${borderRadius}px`,
-                  border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
-                  cursor: 'pointer',
-                  position: 'relative',
-                  padding: '0 10px', // Add padding to ensure a buffer when there is no condition label
-                  overflow: 'hidden', // Ensure text does not overflow the card
-                  textOverflow: 'ellipsis', // Add ellipsis for overflowing text
-                  whiteSpace: 'nowrap', // Prevent text from wrapping
-                }}>
+                <div
+                  key={`${listIndex}-${indexGroup}`}
+                  style={{
+                    width: `${cardWidth}px`,
+                    height: '140px', // Increased height to accommodate icon
+                    backgroundColor: parseColor(interiorColor, interiorOpacity),
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderRadius: `${borderRadius}px`,
+                    border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
+                    cursor: 'pointer',
+                    position: 'relative',
+                    padding: '0 10px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onContextMenu={(e) => handleCardRightClick(listIndex, e)}
+                >
+                  {icon && (
+                    <span className="material-icons" style={{ fontSize: '24px', marginBottom: '5px', color: color }}>
+                      {icon}
+                    </span>
+                  )}
                   {conditionLabel && (
                     <div style={{
                       display: 'flex',
                       justifyContent: 'flex-start',
                       width: '100%',
                       position: 'absolute',
-                      top: '10px', // Add top padding for even spacing
-                      left: '10px', // Ensure at least 10px space from the left border
+                      top: '10px',
+                      left: '10px',
                     }}>
                       <div style={{
                         backgroundColor: getValueColor(value, listIndex),
@@ -254,10 +311,10 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
-                    alignItems: conditionLabel ? 'flex-end' : 'center', // Align text based on the presence of the condition label
+                    alignItems: conditionLabel ? 'flex-end' : 'center',
                     width: '100%',
-                    textAlign: conditionLabel ? 'left' : 'center', // Adjust text alignment
-                    padding: conditionLabel ? '10px 20px 10px 10px' : '10px 5px', // Adjust padding based on the presence of the condition label and 5px for no condition label
+                    textAlign: conditionLabel ? 'left' : 'center',
+                    padding: conditionLabel ? '10px 20px 10px 10px' : '10px 5px',
                   }}>
                     <span style={{ color: titleColor, fontSize: '14px', marginBottom: '5px' }}>{title}</span>
                     <span style={{ color: getValueColor(value, listIndex), fontSize: '24pt', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formatNumber(value)}</span>
@@ -266,7 +323,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               );
             })}
           </div>
-          <div style={{ width: '100%', height: '20px' }}></div> {/* Space between index groups */}
+          <div style={{ width: '100%', height: '20px' }}></div>
         </React.Fragment>
       ))}
     </div>
@@ -274,9 +331,10 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
 
   const renderIndividualCards = () => (
     <div style={{ display: 'flex', gap: `${cardSpacing}px`, flexWrap: 'wrap' }}>
-      {values.filter(value => value !== 0).map((value, index) => { // Filter out zero values
+      {values.filter(value => value !== 0).map((value, index) => {
         const conditionLabel = getConditionLabel(value, index);
         const title = titles[index] || defaultTitle;
+        const { icon, color } = icons[index];
         let cardWidth = 140;
         const titleLength = title.length;
 
@@ -297,35 +355,44 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
         }
 
         if (cardWidth > 190) {
-          cardWidth = 190; // Limit the maximum width to 190px
+          cardWidth = 190;
         }
 
         return (
-          <div key={index} style={{
-            width: `${cardWidth}px`,
-            height: '110px',
-            backgroundColor: parseColor(interiorColor, interiorOpacity),
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: `${borderRadius}px`,
-            border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
-            cursor: 'pointer',
-            position: 'relative',
-            padding: '0 10px', // Add padding to ensure a buffer when there is no condition label
-            overflow: 'hidden', // Ensure text does not overflow the card
-            textOverflow: 'ellipsis', // Add ellipsis for overflowing text
-            whiteSpace: 'nowrap', // Prevent text from wrapping
-          }}>
+          <div
+            key={index}
+            style={{
+              width: `${cardWidth}px`,
+              height: '140px',
+              backgroundColor: parseColor(interiorColor, interiorOpacity),
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderRadius: `${borderRadius}px`,
+              border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
+              cursor: 'pointer',
+              position: 'relative',
+              padding: '0 10px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+            onContextMenu={(e) => handleCardRightClick(index, e)}
+          >
+            {icon && (
+              <span className="material-icons" style={{ fontSize: '24px', marginBottom: '5px', color: color }}>
+                {icon}
+              </span>
+            )}
             {conditionLabel && (
               <div style={{
                 display: 'flex',
                 justifyContent: 'flex-start',
                 width: '100%',
                 position: 'absolute',
-                top: '10px', // Add top padding for even spacing
-                left: '10px', // Ensure at least 10px space from the left border
+                top: '10px',
+                left: '10px',
               }}>
                 <div style={{
                   backgroundColor: getValueColor(value, index),
@@ -342,10 +409,10 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
-              alignItems: conditionLabel ? 'flex-end' : 'center', // Align text based on the presence of the condition label
+              alignItems: conditionLabel ? 'flex-end' : 'center',
               width: '100%',
-              textAlign: conditionLabel ? 'left' : 'center', // Adjust text alignment
-              padding: conditionLabel ? '10px 20px 10px 10px' : '10px 5px', // Adjust padding based on the presence of the condition label and 5px for no condition label
+              textAlign: conditionLabel ? 'left' : 'center',
+              padding: conditionLabel ? '10px 20px 10px 10px' : '10px 5px',
             }}>
               <span style={{ color: titleColor, fontSize: '14px', marginBottom: '5px' }}>{title}</span>
               <span style={{ color: getValueColor(value, index), fontSize: '24pt', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formatNumber(value)}</span>
@@ -356,7 +423,21 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     </div>
   );
 
-  return breakByTrayItems.length === 1 ? renderGroupedCards() : renderIndividualCards();
+  return (
+    <>
+      {breakByTrayItems.length === 1 ? renderGroupedCards() : renderIndividualCards()}
+      {iconPickerVisible && (
+        <IconPicker
+          onPick={handleIconPick}
+          onClose={() => setIconPickerVisible(false)}
+          onColorChange={handleColorChange} // Pass the color change handler
+          leftPosition={pickerLeftPosition} // Pass the left position of the picker
+          currentColor={currentColor} // Pass the current color of the icon
+          onRemoveIcon={handleRemoveIcon} // Pass the remove icon handler
+        />
+      )}
+    </>
+  );
 };
 
 export default InfoCards;
