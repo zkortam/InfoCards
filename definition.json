@@ -2,6 +2,11 @@
   "icon": "./assets/icon.svg",
   "name": "InfoCards",
   "hint": "Display numerical information",
+  "options": {
+    "aggregation": true,
+    "individualFilter": true,
+    "aggregateFilter": true
+  },
   "settings": [
     {
       "name": {
@@ -98,29 +103,55 @@
   ],
   "bindingsTrays": [
     {
+      "key": "tray-key-dim",
+      "name": {
+        "key": "BreakBy"
+      },
+      "queryRole": "row",
+      "minCount": 1,
+      "maxCount": 2
+    },
+    {
       "key": "tray-key",
       "name": {
-        "key": "tray"
+        "key": "measures"
       },
       "queryRole": "measure",
-      "minCount": 1,
       "settings": [
         {
-          "name": "Conditional Formatting",
+          "name": "Number Format",
           "settings": [
             {
-              "name": "Conditions",
-              "key": "conditions",
-              "type": "conditional-formatting",
-              "uiControlOptions": {
-                "labels": {
-                  "backgroundColor": "Progress bar"
-                }
-              }
+              "name": "Scale",
+              "key": "scale1",
+              "type": "scale"
+            },
+            {
+              "name": "Format",
+              "key": "format",
+              "type": "number-format",
+              "defaultValue": "###,###"
+            },
+            {
+              "name": "Conditional Format",
+              "type": "conditional-formatting"
+            },
+            {
+              "name": "Color",
+              "key": "color",
+              "type": "color"
+            },
+            {
+              "name": "Transparency",
+              "key": "transparency",
+              "type": "number",
+              "defaultValue": 70
             }
           ]
         }
-      ]
+      ],
+      "minCount": 1,
+      "maxCount": 5
     }
   ]
 }
