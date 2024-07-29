@@ -119,18 +119,9 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   };
 
   const formatNumber = (num: number) => {
-    if (num >= 1e6) return (num / 1e6).toFixed(3).replace(/\.?0+$/, '') + 'M';
-    if (num >= 1e3) return (num / 1e3).toFixed(3).replace(/\.?0+$/, '') + 'K';
+    if (num >= 1e6 || num <= -1e6) return (num / 1e6).toFixed(3).replace(/\.?0+$/, '') + 'M';
+    if (num >= 1e3 || num <= -1e3) return (num / 1e3).toFixed(3).replace(/\.?0+$/, '') + 'K';
     return num.toFixed(2).replace(/\.?0+$/, '');
-  };
-
-  const isColorLight = (color: string) => {
-    const hex = color.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness > 155;
   };
 
   const getConditionLabel = (value: number, index: number) => {
@@ -252,6 +243,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
             {lists.map((list, listIndex) => {
               if (indexGroup >= list.length) return null;
               const value = list[indexGroup];
+              const formattedValue = formatNumber(value);
               const conditionLabel = getConditionLabel(value, listIndex);
               const title = titles[listIndex] || defaultTitle;
               const { icon, color } = icons[listIndex];
@@ -295,9 +287,9 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                     }}>
                       <div style={{
                         backgroundColor: getValueColor(value, listIndex),
-                        borderRadius: '12px',
+                        borderRadius: `${borderRadius}px`,
                         padding: '5px 10px',
-                        color: isColorLight(getValueColor(value, listIndex)) ? '#000' : '#FFF', // Set text color based on background color
+                        color: getValueColor(value, listIndex) === '#FFFFFF' ? '#000000' : '#FFFFFF', // Ensure text visibility
                         fontSize: '12px'
                       }}>
                         {conditionLabel}
@@ -314,7 +306,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                     padding: conditionLabel ? '10px 20px 10px 10px' : '10px 5px',
                   }}>
                     <span style={{ color: titleColor, fontSize: '14px', marginBottom: '5px' }}>{title}</span>
-                    <span style={{ color: getValueColor(value, listIndex), fontSize: '24pt', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formatNumber(value)}</span>
+                    <span style={{ color: getValueColor(value, listIndex), fontSize: '24pt', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formattedValue}</span>
                   </div>
                 </div>
               );
@@ -329,6 +321,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const renderIndividualCards = () => (
     <div style={{ display: 'flex', gap: `${cardSpacing}px`, flexWrap: 'wrap' }}>
       {values.filter(value => value !== 0).map((value, index) => {
+        const formattedValue = formatNumber(value);
         const conditionLabel = getConditionLabel(value, index);
         const title = titles[index] || defaultTitle;
         const { icon, color } = icons[index];
@@ -372,9 +365,9 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               }}>
                 <div style={{
                   backgroundColor: getValueColor(value, index),
-                  borderRadius: '12px',
+                  borderRadius: `${borderRadius}px`,
                   padding: '5px 10px',
-                  color: isColorLight(getValueColor(value, index)) ? '#000' : '#FFF', // Set text color based on background color
+                  color: getValueColor(value, index) === '#FFFFFF' ? '#000000' : '#FFFFFF', // Ensure text visibility
                   fontSize: '12px'
                 }}>
                   {conditionLabel}
@@ -391,7 +384,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               padding: conditionLabel ? '10px 20px 10px 10px' : '10px 5px',
             }}>
               <span style={{ color: titleColor, fontSize: '14px', marginBottom: '5px' }}>{title}</span>
-              <span style={{ color: getValueColor(value, index), fontSize: '24pt', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formatNumber(value)}</span>
+              <span style={{ color: getValueColor(value, index), fontSize: '24pt', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formattedValue}</span>
             </div>
           </div>
         );
