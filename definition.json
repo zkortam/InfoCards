@@ -15,7 +15,7 @@
       "settings": [
         {
           "name": {
-            "key": "Title"
+            "key": "Default Tit"
           },
           "key": "title",
           "type": "text",
@@ -97,14 +97,6 @@
           "type": "number",
           "hint": "Select the spacing between cards (px)",
           "default": 10
-        },
-        {
-          "name": {
-            "key": "Icon URL"
-          },
-          "key": "iconUrl",
-          "type": "text",
-          "hint": "Enter the URL of the icon image"
         }
       ]
     }
@@ -122,9 +114,11 @@
     {
       "key": "tray-key",
       "name": {
-        "key": "measures"
+        "key": "Measures"
       },
       "queryRole": "measure",
+      "minCount": 1,
+      "maxCount": 5,
       "settings": [
         {
           "name": "Number Format",
@@ -141,10 +135,6 @@
               "defaultValue": "###,###"
             },
             {
-              "name": "Conditional Format",
-              "type": "conditional-formatting"
-            },
-            {
               "name": "Color",
               "key": "color",
               "type": "color"
@@ -157,9 +147,7 @@
             }
           ]
         }
-      ],
-      "minCount": 1,
-      "maxCount": 5
+      ]
     }
   ]
 }
