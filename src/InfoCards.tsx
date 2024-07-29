@@ -124,6 +124,15 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     return num.toFixed(2).replace(/\.?0+$/, '');
   };
 
+  const isColorLight = (color: string) => {
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 155;
+  };
+
   const getConditionLabel = (value: number, index: number) => {
     const sortedConditions = conditions[index]?.sort((a, b) => parseFloat(a.value) - parseFloat(b.value)) || [];
     if (!sortedConditions.length) return null;
@@ -286,9 +295,9 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                     }}>
                       <div style={{
                         backgroundColor: getValueColor(value, listIndex),
-                        borderRadius: `${borderRadius}px`,
+                        borderRadius: '12px',
                         padding: '5px 10px',
-                        color: '#FFF',
+                        color: isColorLight(getValueColor(value, listIndex)) ? '#000' : '#FFF', // Set text color based on background color
                         fontSize: '12px'
                       }}>
                         {conditionLabel}
@@ -363,9 +372,9 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               }}>
                 <div style={{
                   backgroundColor: getValueColor(value, index),
-                  borderRadius: `${borderRadius}px`,
+                  borderRadius: '12px',
                   padding: '5px 10px',
-                  color: '#FFF',
+                  color: isColorLight(getValueColor(value, index)) ? '#000' : '#FFF', // Set text color based on background color
                   fontSize: '12px'
                 }}>
                   {conditionLabel}
