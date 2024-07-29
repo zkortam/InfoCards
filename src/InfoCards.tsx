@@ -221,6 +221,15 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     }
   };
 
+  const calculateCardWidth = (title: string, value: number) => {
+    const titleLength = title.length;
+    const valueLength = formatNumber(value).length;
+    const baseWidth = 30; // Reduced base width for padding and icon space
+    const titleWidth = titleLength * 8; // Approximate width per character for title
+    const valueWidth = valueLength * 14; // Approximate width per character for value
+    return Math.min(baseWidth + titleWidth + valueWidth, 210); // Reduced maximum width
+  };
+
   const renderGroupedCards = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: `${cardSpacing}px` }}>
       {groupLabels.map((groupLabel, indexGroup) => (
@@ -237,35 +246,14 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               const conditionLabel = getConditionLabel(value, listIndex);
               const title = titles[listIndex] || defaultTitle;
               const { icon, color } = icons[listIndex];
-              let cardWidth = 140;
-              const titleLength = title.length;
-
-              if (conditionLabel) {
-                if (titleLength > 12) {
-                  cardWidth += 20;
-                }
-                if (titleLength >= 16) {
-                  cardWidth += 10;
-                }
-              } else {
-                if (titleLength > 11) {
-                  cardWidth += 5;
-                }
-                if (titleLength >= 16) {
-                  cardWidth += 10;
-                }
-              }
-
-              if (cardWidth > 190) {
-                cardWidth = 190;
-              }
+              const cardWidth = calculateCardWidth(title, value);
 
               return (
                 <div
                   key={`${listIndex}-${indexGroup}`}
                   style={{
                     width: `${cardWidth}px`,
-                    height: '140px', // Increased height to accommodate icon
+                    height: '130px', // Reduced height
                     backgroundColor: parseColor(interiorColor, interiorOpacity),
                     display: 'flex',
                     flexDirection: 'column',
@@ -335,35 +323,14 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
         const conditionLabel = getConditionLabel(value, index);
         const title = titles[index] || defaultTitle;
         const { icon, color } = icons[index];
-        let cardWidth = 140;
-        const titleLength = title.length;
-
-        if (conditionLabel) {
-          if (titleLength > 12) {
-            cardWidth += 20;
-          }
-          if (titleLength >= 16) {
-            cardWidth += 10;
-          }
-        } else {
-          if (titleLength > 11) {
-            cardWidth += 5;
-          }
-          if (titleLength >= 16) {
-            cardWidth += 10;
-          }
-        }
-
-        if (cardWidth > 190) {
-          cardWidth = 190;
-        }
+        const cardWidth = calculateCardWidth(title, value);
 
         return (
           <div
             key={index}
             style={{
               width: `${cardWidth}px`,
-              height: '140px',
+              height: '130px', // Reduced height
               backgroundColor: parseColor(interiorColor, interiorOpacity),
               display: 'flex',
               flexDirection: 'column',
