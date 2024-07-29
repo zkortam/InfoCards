@@ -15,7 +15,7 @@
       "settings": [
         {
           "name": {
-            "key": "Default Tit"
+            "key": "Default Title"
           },
           "key": "title",
           "type": "text",
@@ -144,6 +144,21 @@
               "key": "transparency",
               "type": "number",
               "defaultValue": 70
+            }
+          ]
+        },
+        {
+          "name": "Conditional Formatting",
+          "settings": [
+            {
+              "name": "Conditions",
+              "key": "conditions",
+              "type": "conditional-formatting",
+              "uiControlOptions": {
+                "labels": {
+                  "backgroundColor": "Progress bar"
+                }
+              }
             }
           ]
         }
