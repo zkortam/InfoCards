@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { CSSProperties, useEffect, useState } from 'react';
 import {
   AppliedPrompts,
   Context,
@@ -7,6 +7,7 @@ import {
   TContext
 } from '@incorta-org/component-sdk';
 import IconPicker from './IconPicker';  // Import the IconPicker component
+import './styles.less'; // Import your styles
 
 interface Condition {
   value: string;
@@ -37,7 +38,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const breakByTrayItems = context?.component?.bindings?.["tray-key-dim"] || [];
 
   // Extract display settings
-  const interiorColor = settings?.containerColor || "#000000";
+  const interiorColor = settings?.containerColor || "transparent";
   const interiorOpacity = settings?.containerOpacity ? settings.containerOpacity / 100 : 1;
   const borderColor = settings?.borderColor || "#000000";
   const borderOpacity = settings?.borderOpacity ? settings.borderOpacity / 100 : 1;
@@ -46,22 +47,45 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const defaultTitle = settings?.title || "Data";
   const titleColor = settings?.titleColor || "#FFFFFF";
   const valueColor = settings?.valueColor || "#FFFFFF";
-  const cardSpacing = settings?.cardSpacing || 10;
+  const titleFontWeight = settings?.titleFontWeight || "normal";
+  const valueFontWeight = settings?.valueFontWeight || "normal";
+  const titleFontSize = settings?.titleFontSize || 14;
+  const valueFontSize = settings?.valueFontSize || 24;
+
+  // Card Spacing settings
+  const horizontalSpacing = settings?.horizontalSpacing || 10;
+  const verticalSpacing = settings?.verticalSpacing || 10;
+
+  // Card Padding settings
+  const paddingTop = settings?.paddingTop || 0;
+  const paddingRight = settings?.paddingRight || 0;
+  const paddingBottom = settings?.paddingBottom || 0;
+  const paddingLeft = settings?.paddingLeft || 0;
+  const cardInternalPadding = settings?.cardInternalPadding || 0;
+
+  // Icon Size, Position, and Padding settings
+  const iconSize = settings?.iconSize || 24;
+  const iconPosition = settings?.iconPosition || "right"; // Default to "right"
+  const iconPaddingAll = settings?.iconPaddingAll || 0;
+  const iconPaddingTop = settings?.iconPaddingTop || 0;
+  const iconPaddingRight = settings?.iconPaddingRight || 0;
+  const iconPaddingBottom = settings?.iconPaddingBottom || 0;
+  const iconPaddingLeft = settings?.iconPaddingLeft || 0;
 
   const [lists, setLists] = useState<number[][]>([]);
   const [titles, setTitles] = useState<string[]>([]);
   const [conditions, setConditions] = useState<Condition[][]>([]);
   const [groupLabels, setGroupLabels] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
-  const [icons, setIcons] = useState<IconSettings[]>(Array(50).fill({ icon: '', color: '#000000' })); // Updated to store icon and color
+  const [icons, setIcons] = useState<IconSettings[]>(Array(50).fill({ icon: '', color: '#000000' }));
 
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [iconPickerVisible, setIconPickerVisible] = useState(false);
-  const [pickerLeftPosition, setPickerLeftPosition] = useState<number>(0); // State to track left position of picker
-  const [currentColor, setCurrentColor] = useState<string>('#000000'); // State to track current color
+  const [pickerLeftPosition, setPickerLeftPosition] = useState<number>(0);
+  const [currentColor, setCurrentColor] = useState<string>('#000000');
 
   useEffect(() => {
-    if (breakByTrayItems.length === 1) {
+    if (breakByTrayItems.length === 1 && groupLabels.length === 0) {
       const dimensionLabels = data.data.map(row => row[0].value);
       setGroupLabels(dimensionLabels);
 
@@ -89,7 +113,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
         return binding?.settings?.conditions || [];
       });
       setConditions(extractedConditions);
-    } else if (breakByTrayItems.length === 2) {
+    } else if (breakByTrayItems.length === 2 && values.length === 0) {
       if (data.data.length > 0) {
         const measureValues = data.data.map(row => row.map(item => item.value || 0));
         const numericValues = measureValues.flat().map(rawValue => typeof rawValue === 'string' ? parseFloat(rawValue) : rawValue);
@@ -186,8 +210,8 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const handleCardRightClick = (index: number, event: React.MouseEvent) => {
     event.preventDefault();
     setSelectedCardIndex(index);
-    setPickerLeftPosition(event.currentTarget.getBoundingClientRect().left); // Calculate left position of the card
-    setCurrentColor(icons[index].color); // Set the current color to the color of the selected icon
+    setPickerLeftPosition(event.currentTarget.getBoundingClientRect().left);
+    setCurrentColor(icons[index].color);
     setIconPickerVisible(true);
   };
 
@@ -221,25 +245,67 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     }
   };
 
-  const calculateCardWidth = (title: string, value: number) => {
-    const titleLength = title.length;
-    const valueLength = formatNumber(value).length;
-    const baseWidth = 30; // Reduced base width for padding and icon space
-    const titleWidth = titleLength * 8; // Approximate width per character for title
-    const valueWidth = valueLength * 14; // Approximate width per character for value
-    return Math.min(baseWidth + titleWidth + valueWidth, 210); // Reduced maximum width
+  const getIconAndTextContainerStyle = (): CSSProperties => {
+    switch (iconPosition) {
+      case "top":
+        return { display: "flex", flexDirection: "column", alignItems: "center" };
+      case "bottom":
+        return { display: "flex", flexDirection: "column-reverse", alignItems: "center" };
+      case "left":
+        return { display: "flex", flexDirection: "row", alignItems: "center" };
+      case "right":
+        return { display: "flex", flexDirection: "row-reverse", alignItems: "center" };
+      default:
+        return { display: "flex", flexDirection: "row-reverse", alignItems: "center" };
+    }
+  };
+
+  const getIconStyle = (): CSSProperties => {
+    if (iconPaddingAll !== 0) {
+      return {
+        fontSize: `${iconSize}px`,
+        padding: `${iconPaddingAll}px`,
+      };
+    }
+    return {
+      fontSize: `${iconSize}px`,
+      paddingTop: `${iconPaddingTop}px`,
+      paddingRight: `${iconPaddingRight}px`,
+      paddingBottom: `${iconPaddingBottom}px`,
+      paddingLeft: `${iconPaddingLeft}px`,
+    };
+  };
+
+  const getCardPaddingStyle = (): CSSProperties => {
+    if (cardInternalPadding !== 0) {
+      return {
+        padding: `${cardInternalPadding}px`,
+      };
+    }
+    return {
+      paddingTop: `${paddingTop}px`,
+      paddingRight: `${paddingRight}px`,
+      paddingBottom: `${paddingBottom}px`,
+      paddingLeft: `${paddingLeft}px`,
+    };
+  };
+
+  const handlePlaceholderClick = (index: number) => {
+    setSelectedCardIndex(index);
+    setIconPickerVisible(true);
   };
 
   const renderGroupedCards = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: `${cardSpacing}px` }}>
+    <div className="info-cards-container">
       {groupLabels.map((groupLabel, indexGroup) => (
         <React.Fragment key={indexGroup}>
-          {groupLabel && (
-            <div style={{ marginBottom: '10px', fontWeight: 'bold', fontSize: '16px', color: '#000000' }}>
-              {groupLabel}
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: `${cardSpacing}px`, flexWrap: 'wrap' }}>
+          {groupLabel && <div className="group-label">{groupLabel}</div>}
+          <div
+            className="grouped-cards"
+            style={{
+              gap: `${horizontalSpacing}px`,
+            }}
+          >
             {lists.map((list, listIndex) => {
               if (indexGroup >= list.length) return null;
               const value = list[indexGroup];
@@ -247,144 +313,193 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               const conditionLabel = getConditionLabel(value, listIndex);
               const title = titles[listIndex] || defaultTitle;
               const { icon, color } = icons[listIndex];
-              const cardWidth = calculateCardWidth(title, value);
 
               return (
                 <div
                   key={`${listIndex}-${indexGroup}`}
+                  className="card"
                   style={{
-                    width: `${cardWidth}px`,
-                    height: '130px', // Reduced height
                     backgroundColor: parseColor(interiorColor, interiorOpacity),
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
                     borderRadius: `${borderRadius}px`,
                     border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
-                    cursor: 'pointer',
-                    position: 'relative',
-                    padding: '0 10px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
+                    marginBottom: `${verticalSpacing}px`,
+                    ...getCardPaddingStyle(),
                   }}
-                  onContextMenu={(e) => handleCardRightClick(listIndex, e)}
                 >
-                  {icon && (
-                    <span className="material-icons" style={{ fontSize: '24px', marginBottom: '5px', color: color }}>
-                      {icon}
-                    </span>
-                  )}
-                  {conditionLabel && (
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'flex-start',
-                      width: '100%',
-                      position: 'absolute',
-                      top: '10px',
-                      left: '10px',
-                    }}>
-                      <div style={{
-                        backgroundColor: getValueColor(value, listIndex),
-                        borderRadius: `${borderRadius}px`,
-                        padding: '5px 10px',
-                        color: getValueColor(value, listIndex) === '#FFFFFF' ? '#000000' : '#FFFFFF', // Ensure text visibility
-                        fontSize: '12px'
-                      }}>
-                        {conditionLabel}
+                  <div style={getIconAndTextContainerStyle()}>
+                    {/* Icon Rendering */}
+                    {icon ? (
+                      <div>
+                        <span className="material-icons" style={getIconStyle()}>
+                          {icon}
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                      className="icon-placeholder"
+                      onClick={() => handlePlaceholderClick(listIndex)}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        width: "80px",
+                        height: "80px",
+                        border: "2px dashed #ccc",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        ...(iconPosition === "right" && { marginLeft: "30px" }),  // 30px left if icon is on the right
+                        ...(iconPosition === "left" && { marginRight: "30px" }),   // 30px right if icon is on the left
+                        ...(iconPosition === "top" && { marginBottom: "30px" }),   // 30px bottom if icon is on top
+                        ...(iconPosition === "bottom" && { marginTop: "30px" }),   // 30px top if icon is on bottom
+                      }}
+                    >
+                      <span className="material-icons" style={{ color: "#ccc", fontSize: "24px" }}>add</span>
+                      <span style={{ color: "#666", fontSize: "12px" }}>Add Icon</span>
+                    </div>
+                    
+                    )}
+                    {/* Text Rendering */}
+                    <div>
+                      {conditionLabel && (
+                        <div className="condition-label-container">
+                          <div
+                            className="condition-label"
+                            style={{
+                              backgroundColor: getValueColor(value, listIndex),
+                              borderRadius: `${borderRadius}px`,
+                              color: getValueColor(value, listIndex) === '#FFFFFF' ? '#000000' : '#FFFFFF',
+                            }}
+                          >
+                            {conditionLabel}
+                          </div>
+                        </div>
+                      )}
+                      <div className="card-content">
+                        <span
+                          className="card-title"
+                          style={{
+                            color: titleColor,
+                            fontWeight: titleFontWeight,
+                            fontSize: `${titleFontSize}px`,
+                          }}
+                        >
+                          {title}
+                        </span>
+                        <span
+                          className="card-value"
+                          style={{
+                            color: getValueColor(value, listIndex),
+                            fontWeight: valueFontWeight,
+                            fontSize: `${valueFontSize}px`,
+                          }}
+                        >
+                          {formattedValue}
+                        </span>
                       </div>
                     </div>
-                  )}
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: conditionLabel ? 'flex-end' : 'center',
-                    width: '100%',
-                    textAlign: conditionLabel ? 'left' : 'center',
-                    padding: conditionLabel ? '10px 20px 10px 10px' : '10px 5px',
-                  }}>
-                    <span style={{ color: titleColor, fontSize: '14px', marginBottom: '5px' }}>{title}</span>
-                    <span style={{ color: getValueColor(value, listIndex), fontSize: '24pt', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formattedValue}</span>
                   </div>
                 </div>
               );
             })}
           </div>
-          <div style={{ width: '100%', height: '20px' }}></div>
         </React.Fragment>
       ))}
     </div>
   );
 
   const renderIndividualCards = () => (
-    <div style={{ display: 'flex', gap: `${cardSpacing}px`, flexWrap: 'wrap' }}>
+    <div
+      className="grouped-cards"
+      style={{
+        gap: `${horizontalSpacing}px`,
+      }}
+    >
       {values.filter(value => value !== 0).map((value, index) => {
         const formattedValue = formatNumber(value);
         const conditionLabel = getConditionLabel(value, index);
         const title = titles[index] || defaultTitle;
         const { icon, color } = icons[index];
-        const cardWidth = calculateCardWidth(title, value);
 
         return (
           <div
             key={index}
+            className="card"
             style={{
-              width: `${cardWidth}px`,
-              height: '130px', // Reduced height
               backgroundColor: parseColor(interiorColor, interiorOpacity),
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
               borderRadius: `${borderRadius}px`,
               border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
-              cursor: 'pointer',
-              position: 'relative',
-              padding: '0 10px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              marginBottom: `${verticalSpacing}px`,
+              ...getCardPaddingStyle(),
             }}
-            onContextMenu={(e) => handleCardRightClick(index, e)}
           >
-            {icon && (
-              <span className="material-icons" style={{ fontSize: '24px', marginBottom: '5px', color: color }}>
-                {icon}
-              </span>
-            )}
-            {conditionLabel && (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'flex-start',
-                width: '100%',
-                position: 'absolute',
-                top: '10px',
-                left: '10px',
-              }}>
-                <div style={{
-                  backgroundColor: getValueColor(value, index),
-                  borderRadius: `${borderRadius}px`,
-                  padding: '5px 10px',
-                  color: getValueColor(value, index) === '#FFFFFF' ? '#000000' : '#FFFFFF', // Ensure text visibility
-                  fontSize: '12px'
-                }}>
-                  {conditionLabel}
+            <div style={getIconAndTextContainerStyle()}>
+              {/* Icon Rendering */}
+              {icon ? (
+                <div>
+                  <span className="material-icons" style={getIconStyle()}>
+                    {icon}
+                  </span>
+                </div>
+              ) : (
+                <div
+                  className="icon-placeholder"
+                  onClick={() => handlePlaceholderClick(index)}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    width: "80px",
+                    height: "80px",
+                    border: "2px dashed #ccc",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                  }}
+                >
+                  <span className="material-icons" style={{ color: "#ccc", fontSize: "24px" }}>add</span>
+                  <span style={{ color: "#666", fontSize: "12px" }}>+ Icon</span>
+                </div>
+              )}
+              {/* Text Rendering */}
+              <div>
+                {conditionLabel && (
+                  <div className="condition-label-container">
+                    <div
+                      className="condition-label"
+                      style={{
+                        backgroundColor: getValueColor(value, index),
+                        borderRadius: `${borderRadius}px`,
+                        color: getValueColor(value, index) === '#FFFFFF' ? '#000000' : '#FFFFFF',
+                      }}
+                    >
+                      {conditionLabel}
+                    </div>
+                  </div>
+                )}
+                <div className="card-content">
+                  <span
+                    className="card-title"
+                    style={{
+                      color: titleColor,
+                      fontWeight: titleFontWeight,
+                      fontSize: `${titleFontSize}px`,
+                    }}
+                  >
+                    {title}
+                  </span>
+                  <span
+                    className="card-value"
+                    style={{
+                      color: getValueColor(value, index),
+                      fontWeight: valueFontWeight,
+                      fontSize: `${valueFontSize}px`,
+                    }}
+                  >
+                    {formattedValue}
+                  </span>
                 </div>
               </div>
-            )}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: conditionLabel ? 'flex-end' : 'center',
-              width: '100%',
-              textAlign: conditionLabel ? 'left' : 'center',
-              padding: conditionLabel ? '10px 20px 10px 10px' : '10px 5px',
-            }}>
-              <span style={{ color: titleColor, fontSize: '14px', marginBottom: '5px' }}>{title}</span>
-              <span style={{ color: getValueColor(value, index), fontSize: '24pt', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formattedValue}</span>
             </div>
           </div>
         );
@@ -399,10 +514,10 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
         <IconPicker
           onPick={handleIconPick}
           onClose={() => setIconPickerVisible(false)}
-          onColorChange={handleColorChange} // Pass the color change handler
-          leftPosition={pickerLeftPosition} // Pass the left position of the picker
-          currentColor={currentColor} // Pass the current color of the icon
-          onRemoveIcon={handleRemoveIcon} // Pass the remove icon handler
+          onColorChange={handleColorChange}
+          leftPosition={pickerLeftPosition}
+          currentColor={currentColor}
+          onRemoveIcon={handleRemoveIcon}
         />
       )}
     </>
