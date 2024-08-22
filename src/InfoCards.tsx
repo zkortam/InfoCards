@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { CSSProperties, useEffect, useState } from 'react';
 import {
   AppliedPrompts,
   Context,
@@ -6,6 +6,8 @@ import {
   ResponseData,
   TContext
 } from '@incorta-org/component-sdk';
+import IconPicker from './IconPicker';
+import './styles.less';
 
 interface Condition {
   value: string;
@@ -26,11 +28,16 @@ interface Props {
   drillDown: onDrillDownFunction;
 }
 
+interface IconSettings {
+  icon: string;
+  color: string;
+}
+
 const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const settings = context?.component?.settings;
+  const breakByTrayItems = context?.component?.bindings?.["tray-key-dim"] || [];
 
-  // Extract display settings
-  const interiorColor = settings?.containerColor || "#000000";
+  const interiorColor = settings?.containerColor || "transparent";
   const interiorOpacity = settings?.containerOpacity ? settings.containerOpacity / 100 : 1;
   const borderColor = settings?.borderColor || "#000000";
   const borderOpacity = settings?.borderOpacity ? settings.borderOpacity / 100 : 1;
@@ -38,24 +45,83 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const borderRadius = settings?.borderRadius || 10;
   const defaultTitle = settings?.title || "Data";
   const titleColor = settings?.titleColor || "#FFFFFF";
-  const valueColor = settings?.valueColor || "#FFFFFF"; // Extract value color from settings
-  const cardSpacing = settings?.cardSpacing || 10; // Extract card spacing from settings, default to 10px
+  const valueColor = settings?.valueColor || "#FFFFFF";
+  const titleFontWeight = settings?.titleFontWeight || "normal";
+  const valueFontWeight = settings?.valueFontWeight || "normal";
+  const titleFontSize = settings?.titleFontSize || 14;
+  const valueFontSize = settings?.valueFontSize || 24;
 
-  const [values, setValues] = useState<number[]>([]);
+  const horizontalSpacing = settings?.horizontalSpacing || 10;
+  const verticalSpacing = settings?.verticalSpacing || 10;
+
+  const paddingTop = settings?.paddingTop || 0;
+  const paddingRight = settings?.paddingRight || 0;
+  const paddingBottom = settings?.paddingBottom || 0;
+  const paddingLeft = settings?.paddingLeft || 0;
+  const cardInternalPadding = settings?.cardInternalPadding || 0;
+
+  const iconSize = settings?.iconSize || 24;
+  const iconPosition = settings?.iconPosition || "right";
+  const iconPaddingAll = settings?.iconPaddingAll || 0;
+  const iconPaddingTop = settings?.iconPaddingTop || 0;
+  const iconPaddingRight = settings?.iconPaddingRight || 0;
+  const iconPaddingBottom = settings?.iconPaddingBottom || 0;
+  const iconPaddingLeft = settings?.iconPaddingLeft || 0;
+
+  const conditionLabelPosition = settings?.conditionLabelPosition || "top-left";
+  const conditionLabelSpacing = settings?.conditionLabelSpacing || 5;
+
+  const [lists, setLists] = useState<number[][]>([]);
   const [titles, setTitles] = useState<string[]>([]);
   const [conditions, setConditions] = useState<Condition[][]>([]);
+  const [groupLabels, setGroupLabels] = useState<string[]>([]);
+  const [values, setValues] = useState<number[]>([]);
+  const [icons, setIcons] = useState<IconSettings[]>(Array(50).fill({ icon: '', color: '#000000' }));
 
-  useEffect(() => {
-    if (data.data.length > 0) {
-      const rawValues = data.data[0].map(item => item.value || 0);
-      const numericValues = rawValues.map(rawValue => typeof rawValue === 'string' ? parseFloat(rawValue) : rawValue);
-      setValues(numericValues.slice(0, 10)); // Ensure up to 10 values
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
+  const [iconPickerVisible, setIconPickerVisible] = useState(false);
+  const [pickerLeftPosition, setPickerLeftPosition] = useState<number>(0);
+  const [currentColor, setCurrentColor] = useState<string>('#000000');
+
+  const fetchData = () => {
+    if (breakByTrayItems.length === 1) {
+      const dimensionLabels = data.data.map(row => row[0].value);
+      setGroupLabels(dimensionLabels);
+
+      const numberOfLists = Math.min(data.measureHeaders.length, 50);
+      const initialLists: number[][] = Array.from({ length: numberOfLists }, (_, i) =>
+        data.data.map(row => Number(row[i + 1].value))
+      );
+
+      initialLists.forEach((list, index) => {
+        if (list.length === 0 || list.every(point => point === 0)) {
+          initialLists[index] = Array(50).fill(0);
+        }
+      });
+
+      setLists(initialLists.map(list => list.slice(0, 50)));
 
       const headers = data.measureHeaders.map(header => {
         const parts = header.label.split('.');
         return parts[parts.length - 1] || defaultTitle;
       });
-      setTitles(headers.slice(0, 10)); // Ensure up to 10 titles
+      setTitles(headers.slice(0, 50));
+
+      const extractedConditions = initialLists.map((_, index) => {
+        const binding = (context?.component?.bindings?.["tray-key"]?.[index] as unknown as Binding);
+        return binding?.settings?.conditions || [];
+      });
+      setConditions(extractedConditions);
+    } else if (breakByTrayItems.length === 2) {
+      const measureValues = data.data.map(row => row.map(item => item.value || 0));
+      const numericValues = measureValues.flat().map(rawValue => typeof rawValue === 'string' ? parseFloat(rawValue) : rawValue);
+      setValues(numericValues.slice(0, 10));
+
+      const headers = data.measureHeaders.map(header => {
+        const parts = header.label.split('.');
+        return parts[parts.length - 1] || defaultTitle;
+      });
+      setTitles(headers.slice(0, 10));
 
       const extractedConditions = numericValues.map((_, index) => {
         const binding = (context?.component?.bindings?.["tray-key"]?.[index] as unknown as Binding);
@@ -63,6 +129,10 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       });
       setConditions(extractedConditions);
     }
+  };
+
+  useEffect(() => {
+    fetchData(); // Fetch data initially and when the data changes
   }, [data]);
 
   const parseColor = (color: string, opacity: number) => {
@@ -74,16 +144,16 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   };
 
   const formatNumber = (num: number) => {
-    if (num >= 1e6) return (num / 1e6).toFixed(3).replace(/\.?0+$/, '') + 'M';
-    if (num >= 1e3) return (num / 1e3).toFixed(3).replace(/\.?0+$/, '') + 'K';
-    return num.toString();
+    if (num >= 1e6 || num <= -1e6) return (num / 1e6).toFixed(3).replace(/\.?0+$/, '') + 'M';
+    if (num >= 1e3 || num <= -1e3) return (num / 1e3).toFixed(3).replace(/\.?0+$/, '') + 'K';
+    return num.toFixed(2).replace(/\.?0+$/, '');
   };
 
   const getConditionLabel = (value: number, index: number) => {
     const sortedConditions = conditions[index]?.sort((a, b) => parseFloat(a.value) - parseFloat(b.value)) || [];
     if (!sortedConditions.length) return null;
 
-    let appliedColor = valueColor; // Default to valueColor if no conditions
+    let appliedColor = valueColor;
 
     for (const condition of sortedConditions) {
       const threshold = parseFloat(condition.value);
@@ -112,11 +182,11 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     const indexColor = sortedConditions.map(cond => cond.color).indexOf(appliedColor);
     const numColors = sortedConditions.length;
 
-    if (numColors === 1) return "Med"; // Only one condition
-    if (numColors % 2 === 0) { // Even number of conditions
+    if (numColors === 1) return "Med";
+    if (numColors % 2 === 0) {
       if (indexColor < numColors / 2) return "Low";
       return "High";
-    } else { // Odd number of conditions
+    } else {
       const third = Math.floor(numColors / 3);
       if (indexColor < third) return "Low";
       if (indexColor >= third * 2) return "High";
@@ -126,7 +196,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
 
   const getValueColor = (value: number, index: number) => {
     const sortedConditions = conditions[index]?.sort((a, b) => parseFloat(a.value) - parseFloat(b.value)) || [];
-    if (!sortedConditions.length) return valueColor; // Use valueColor if no conditions
+    if (!sortedConditions.length) return valueColor;
     for (const condition of sortedConditions) {
       const threshold = parseFloat(condition.value);
       if (condition.op === '<' && value < threshold) return condition.color;
@@ -135,88 +205,342 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       if (condition.op === '<=' && value <= threshold) return condition.color;
       if (condition.op === '>=' && value >= threshold) return condition.color;
     }
-    return valueColor; // Use valueColor if no conditions match
+    return valueColor;
   };
 
-  return (
-    <div style={{ display: 'flex', gap: `${cardSpacing}px`, flexWrap: 'wrap' }}>
-      {values.map((value, index) => {
+  const handleCardRightClick = (index: number, event: React.MouseEvent) => {
+    event.preventDefault();
+    setSelectedCardIndex(index);
+    setPickerLeftPosition(event.currentTarget.getBoundingClientRect().left);
+    setCurrentColor(icons[index].color);
+    setIconPickerVisible(true);
+  };
+
+  const handleIconPick = (icon: string, color: string) => {
+    if (selectedCardIndex !== null) {
+      const newIcons = [...icons];
+      newIcons[selectedCardIndex] = { icon, color };
+      setIcons(newIcons);
+      setIconPickerVisible(false);
+      setSelectedCardIndex(null);
+    }
+  };
+
+  const handleColorChange = (color: string) => {
+    if (selectedCardIndex !== null) {
+      const newIcons = [...icons];
+      if (newIcons[selectedCardIndex].icon) {
+        newIcons[selectedCardIndex].color = color;
+        setIcons(newIcons);
+      }
+    }
+  };
+
+  const handleRemoveIcon = () => {
+    if (selectedCardIndex !== null) {
+      const newIcons = [...icons];
+      newIcons[selectedCardIndex] = { icon: '', color: '#000000' };
+      setIcons(newIcons);
+      setIconPickerVisible(false);
+      setSelectedCardIndex(null);
+    }
+  };
+
+  const getIconAndTextContainerStyle = (): CSSProperties => {
+    switch (iconPosition) {
+      case "top":
+        return { display: "flex", flexDirection: "column", alignItems: "center" };
+      case "bottom":
+        return { display: "flex", flexDirection: "column-reverse", alignItems: "center" };
+      case "left":
+        return { display: "flex", flexDirection: "row", alignItems: "center" };
+      case "right":
+        return { display: "flex", flexDirection: "row-reverse", alignItems: "center" };
+      default:
+        return { display: "flex", flexDirection: "row-reverse", alignItems: "center" };
+    }
+  };
+
+  const getIconStyle = (): CSSProperties => {
+    if (iconPaddingAll !== 0) {
+      return {
+        fontSize: `${iconSize}px`,
+        padding: `${iconPaddingAll}px`,
+        cursor: 'pointer',
+      };
+    }
+    return {
+      fontSize: `${iconSize}px`,
+      paddingTop: `${iconPaddingTop}px`,
+      paddingRight: `${iconPaddingRight}px`,
+      paddingBottom: `${iconPaddingBottom}px`,
+      paddingLeft: `${iconPaddingLeft}px`,
+      cursor: 'pointer',
+    };
+  };
+
+  const getCardPaddingStyle = (): CSSProperties => {
+    if (cardInternalPadding !== 0) {
+      return {
+        padding: `${cardInternalPadding}px`,
+      };
+    }
+    return {
+      paddingTop: `${paddingTop}px`,
+      paddingRight: `${paddingRight}px`,
+      paddingBottom: `${paddingBottom}px`,
+      paddingLeft: `${paddingLeft}px`,
+    };
+  };
+
+  const getConditionLabelPositionStyle = (): CSSProperties => {
+    const spacing = `${conditionLabelSpacing}px`;
+    switch (conditionLabelPosition) {
+      case "top-left":
+        return { top: spacing, left: spacing, position: 'absolute' };
+      case "top-right":
+        return { top: spacing, right: spacing, position: 'absolute' };
+      case "bottom-left":
+        return { bottom: spacing, left: spacing, position: 'absolute' };
+      case "bottom-right":
+        return { bottom: spacing, right: spacing, position: 'absolute' };
+      default:
+        return { top: spacing, left: spacing, position: 'absolute' };
+    }
+  };
+
+  const handlePlaceholderClick = (index: number) => {
+    setSelectedCardIndex(index);
+    setIconPickerVisible(true);
+  };
+
+  const renderGroupedCards = () => (
+    <div className="info-cards-container">
+      {groupLabels.map((groupLabel, indexGroup) => (
+        <React.Fragment key={indexGroup}>
+          {groupLabel && <div className="group-label">{groupLabel}</div>}
+          <div
+            className="grouped-cards"
+            style={{
+              gap: `${horizontalSpacing}px`,
+            }}
+          >
+            {lists.map((list, listIndex) => {
+              if (indexGroup >= list.length) return null;
+              const value = list[indexGroup];
+              const formattedValue = formatNumber(value);
+              const conditionLabel = getConditionLabel(value, listIndex);
+              const title = titles[listIndex] || defaultTitle;
+              const { icon, color } = icons[listIndex];
+
+              return (
+                <div
+                  key={`${listIndex}-${indexGroup}`}
+                  className="card"
+                  style={{
+                    backgroundColor: parseColor(interiorColor, interiorOpacity),
+                    borderRadius: `${borderRadius}px`,
+                    border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
+                    marginBottom: `${verticalSpacing}px`,
+                    ...getCardPaddingStyle(),
+                    position: 'relative', // Needed to position the condition label
+                  }}
+                >
+                  <div style={getIconAndTextContainerStyle()}>
+                    {icon ? (
+                      <div onClick={() => handlePlaceholderClick(listIndex)}>
+                        <span className="material-icons" style={getIconStyle()}>
+                          {icon}
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                        className="icon-placeholder"
+                        onClick={() => handlePlaceholderClick(listIndex)}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          width: "80px",
+                          height: "80px",
+                          border: "2px dashed #ccc",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          ...(iconPosition === "right" && { marginLeft: "30px" }),
+                          ...(iconPosition === "left" && { marginRight: "30px" }),
+                          ...(iconPosition === "top" && { marginBottom: "30px" }),
+                          ...(iconPosition === "bottom" && { marginTop: "30px" }),
+                        }}
+                      >
+                        <span className="material-icons" style={{ color: "#ccc", fontSize: "24px" }}>add</span>
+                        <span style={{ color: "#666", fontSize: "12px" }}>Add Icon</span>
+                      </div>
+                    )}
+                    <div>
+                      {conditionLabel && (
+                        <div className="condition-label-container" style={getConditionLabelPositionStyle()}>
+                          <div
+                            className="condition-label"
+                            style={{
+                              backgroundColor: getValueColor(value, listIndex),
+                              padding: '5px',
+                              borderRadius: `${borderRadius}px`,
+                              color: getValueColor(value, listIndex) === '#FFFFFF' ? '#000000' : '#FFFFFF',
+                              whiteSpace: 'nowrap', // Prevents stretching
+                            }}
+                          >
+                            {conditionLabel}
+                          </div>
+                        </div>
+                      )}
+                      <div className="card-content">
+                        <span
+                          className="card-title"
+                          style={{
+                            color: titleColor,
+                            fontWeight: titleFontWeight,
+                            fontSize: `${titleFontSize}px`,
+                          }}
+                        >
+                          {title}
+                        </span>
+                        <span
+                          className="card-value"
+                          style={{
+                            color: getValueColor(value, listIndex),
+                            fontWeight: valueFontWeight,
+                            fontSize: `${valueFontSize}px`,
+                          }}
+                        >
+                          {formattedValue}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+
+  const renderIndividualCards = () => (
+    <div
+      className="grouped-cards"
+      style={{
+        gap: `${horizontalSpacing}px`,
+      }}
+    >
+      {values.filter(value => value !== 0).map((value, index) => {
+        const formattedValue = formatNumber(value);
         const conditionLabel = getConditionLabel(value, index);
         const title = titles[index] || defaultTitle;
-        let cardWidth = 140;
-        const titleLength = title.length;
-
-        if (conditionLabel) {
-          if (titleLength > 12) {
-            cardWidth += 20;
-          }
-          if (titleLength >= 16) {
-            cardWidth += 10;
-          }
-        } else {
-          if (titleLength > 11) {
-            cardWidth += 5;
-          }
-          if (titleLength >= 16) {
-            cardWidth += 10;
-          }
-        }
-
-        if (cardWidth > 190) {
-          cardWidth = 190; // Limit the maximum width to 190px
-        }
+        const { icon, color } = icons[index];
 
         return (
-          <div key={index} style={{
-            width: `${cardWidth}px`,
-            height: '110px',
-            backgroundColor: parseColor(interiorColor, interiorOpacity),
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: `${borderRadius}px`,
-            border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
-            cursor: 'pointer',
-            position: 'relative',
-            padding: '0 10px', // Add padding to ensure a buffer when there is no condition label
-          }}>
-            {conditionLabel && (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'flex-start',
-                width: '100%',
-                position: 'absolute',
-                top: '10px', // Add top padding for even spacing
-                left: '10px', // Ensure at least 10px space from the left border
-              }}>
-                <div style={{
-                  backgroundColor: getValueColor(value, index),
-                  borderRadius: `${borderRadius}px`,
-                  padding: '5px 10px',
-                  color: '#FFF',
-                  fontSize: '12px'
-                }}>
-                  {conditionLabel}
+          <div
+            key={index}
+            className="card"
+            style={{
+              backgroundColor: parseColor(interiorColor, interiorOpacity),
+              borderRadius: `${borderRadius}px`,
+              border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
+              marginBottom: `${verticalSpacing}px`,
+              ...getCardPaddingStyle(),
+              position: 'relative', // Needed to position the condition label
+            }}
+          >
+            <div style={getIconAndTextContainerStyle()}>
+              {icon ? (
+                <div onClick={() => handlePlaceholderClick(index)}>
+                  <span className="material-icons" style={getIconStyle()}>
+                    {icon}
+                  </span>
+                </div>
+              ) : (
+                <div
+                  className="icon-placeholder"
+                  onClick={() => handlePlaceholderClick(index)}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    width: "80px",
+                    height: "80px",
+                    border: "2px dashed #ccc",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                  }}
+                >
+                  <span className="material-icons" style={{ color: "#ccc", fontSize: "24px" }}>add</span>
+                  <span style={{ color: "#666", fontSize: "12px" }}>+ Icon</span>
+                </div>
+              )}
+              <div>
+                {conditionLabel && (
+                  <div className="condition-label-container" style={getConditionLabelPositionStyle()}>
+                    <div
+                      className="condition-label"
+                      style={{
+                        backgroundColor: getValueColor(value, index),
+                        padding: '5px',
+                        borderRadius: `${borderRadius}px`,
+                        color: getValueColor(value, index) === '#FFFFFF' ? '#000000' : '#FFFFFF',
+                        whiteSpace: 'nowrap', // Prevents stretching
+                      }}
+                    >
+                      {conditionLabel}
+                    </div>
+                  </div>
+                )}
+                <div className="card-content">
+                  <span
+                    className="card-title"
+                    style={{
+                      color: titleColor,
+                      fontWeight: titleFontWeight,
+                      fontSize: `${titleFontSize}px`,
+                    }}
+                  >
+                    {title}
+                  </span>
+                  <span
+                    className="card-value"
+                    style={{
+                      color: getValueColor(value, index),
+                      fontWeight: valueFontWeight,
+                      fontSize: `${valueFontSize}px`,
+                    }}
+                  >
+                    {formattedValue}
+                  </span>
                 </div>
               </div>
-            )}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: conditionLabel ? 'flex-end' : 'center', // Align text based on the presence of the condition label
-              width: '100%',
-              textAlign: conditionLabel ? 'left' : 'center', // Adjust text alignment
-              padding: conditionLabel ? '10px 20px 10px 10px' : '10px 5px', // Adjust padding based on the presence of the condition label and 5px for no condition label
-            }}>
-              <span style={{ color: titleColor, fontSize: '14px', marginBottom: '5px' }}>{title}</span>
-              <span style={{ color: getValueColor(value, index), fontSize: '24pt' }}>{formatNumber(value)}</span>
             </div>
           </div>
         );
       })}
     </div>
+  );
+
+  return (
+    <>
+      {breakByTrayItems.length === 1 ? renderGroupedCards() : renderIndividualCards()}
+      {iconPickerVisible && (
+        <IconPicker
+          onPick={handleIconPick}
+          onClose={() => setIconPickerVisible(false)}
+          onColorChange={handleColorChange}
+          leftPosition={pickerLeftPosition}
+          currentColor={currentColor}
+          onRemoveIcon={handleRemoveIcon}
+        />
+      )}
+    </>
   );
 };
 
