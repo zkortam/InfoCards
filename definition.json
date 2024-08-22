@@ -1,7 +1,12 @@
 {
   "icon": "./assets/icon.svg",
   "name": "InfoCards",
-  "hint": "Display numerical information",
+  "hint": "Drag one item to 'BreakBy' for grouped lists (e.g., [49, 54, 695]). Drag two items for individual numbers (e.g., 59).",
+  "options": {
+    "aggregation": true,
+    "individualFilter": true,
+    "aggregateFilter": true
+  },
   "settings": [
     {
       "name": {
@@ -10,7 +15,7 @@
       "settings": [
         {
           "name": {
-            "key": "Title"
+            "key": "Default Title"
           },
           "key": "title",
           "type": "text",
@@ -22,7 +27,8 @@
           },
           "key": "titleColor",
           "type": "color",
-          "hint": "Select the title color"
+          "hint": "Select the title color",
+          "defaultValue": "#000000"
         },
         {
           "name": {
@@ -30,7 +36,96 @@
           },
           "key": "valueColor",
           "type": "color",
-          "hint": "Select the value color"
+          "hint": "Select the value color",
+          "defaultValue": "#000000"
+        },
+        {
+          "name": {
+            "key": "Title Font Weight"
+          },
+          "key": "titleFontWeight",
+          "type": "dropdown",
+          "options": [
+            {
+              "key": "thin",
+              "label": "Thin"
+            },
+            {
+              "key": "semi-thin",
+              "label": "Semi-Thin"
+            },
+            {
+              "key": "normal",
+              "label": "Normal"
+            },
+            {
+              "key": "medium",
+              "label": "Medium"
+            },
+            {
+              "key": "bold",
+              "label": "Bold"
+            },
+            {
+              "key": "extra-bold",
+              "label": "Extra Bold"
+            }
+          ],
+          "defaultValue": "normal",
+          "hint": "Select the title font weight"
+        },
+        {
+          "name": {
+            "key": "Value Font Weight"
+          },
+          "key": "valueFontWeight",
+          "type": "dropdown",
+          "options": [
+            {
+              "key": "thin",
+              "label": "Thin"
+            },
+            {
+              "key": "semi-thin",
+              "label": "Semi-Thin"
+            },
+            {
+              "key": "normal",
+              "label": "Normal"
+            },
+            {
+              "key": "medium",
+              "label": "Medium"
+            },
+            {
+              "key": "bold",
+              "label": "Bold"
+            },
+            {
+              "key": "extra-bold",
+              "label": "Extra Bold"
+            }
+          ],
+          "defaultValue": "normal",
+          "hint": "Select the value font weight"
+        },
+        {
+          "name": {
+            "key": "Title Font Size"
+          },
+          "key": "titleFontSize",
+          "type": "number",
+          "hint": "Set the font size of the title (px)",
+          "defaultValue": 14
+        },
+        {
+          "name": {
+            "key": "Value Font Size"
+          },
+          "key": "valueFontSize",
+          "type": "number",
+          "hint": "Set the font size of the value (px)",
+          "defaultValue": 24
         },
         {
           "name": {
@@ -83,28 +178,272 @@
           "key": "borderRadius",
           "type": "number",
           "hint": "Select the corner rounding"
+        }
+      ]
+    },
+    {
+      "name": {
+        "key": "Card Spacing"
+      },
+      "settings": [
+        {
+          "name": {
+            "key": "Horizontal Spacing"
+          },
+          "key": "horizontalSpacing",
+          "type": "number",
+          "hint": "Select the horizontal spacing between cards (px)",
+          "defaultValue": 10
         },
         {
           "name": {
-            "key": "Card Spacing"
+            "key": "Vertical Spacing"
           },
-          "key": "cardSpacing",
+          "key": "verticalSpacing",
           "type": "number",
-          "hint": "Select the spacing between cards (px)",
-          "default": 10
+          "hint": "Select the vertical spacing between cards (px)",
+          "defaultValue": 10
+        }
+      ]
+    },
+    {
+      "name": {
+        "key": "Card Padding"
+      },
+      "settings": [
+        {
+          "name": {
+            "key": "Card Internal Padding"
+          },
+          "key": "cardInternalPadding",
+          "type": "number",
+          "hint": "Set equal padding around the card (px). Overrides individual padding settings if not 0.",
+          "defaultValue": 0
+        },
+        {
+          "name": {
+            "key": "Padding Top"
+          },
+          "key": "paddingTop",
+          "type": "number",
+          "hint": "Set padding above the card content (px)",
+          "defaultValue": 10
+        },
+        {
+          "name": {
+            "key": "Padding Right"
+          },
+          "key": "paddingRight",
+          "type": "number",
+          "hint": "Set padding to the right of the card content (px)",
+          "defaultValue": 10
+        },
+        {
+          "name": {
+            "key": "Padding Bottom"
+          },
+          "key": "paddingBottom",
+          "type": "number",
+          "hint": "Set padding below the card content (px)",
+          "defaultValue": 10
+        },
+        {
+          "name": {
+            "key": "Padding Left"
+          },
+          "key": "paddingLeft",
+          "type": "number",
+          "hint": "Set padding to the left of the card content (px)",
+          "defaultValue": 10
+        }
+      ]
+    },
+    {
+      "name": {
+        "key": "Icon Settings"
+      },
+      "settings": [
+        {
+          "name": {
+            "key": "Icon Size"
+          },
+          "key": "iconSize",
+          "type": "number",
+          "hint": "Select the icon size (px)",
+          "defaultValue": 40
+        },
+        {
+          "name": {
+            "key": "Icon Position"
+          },
+          "key": "iconPosition",
+          "type": "dropdown",
+          "options": [
+            {
+              "key": "top",
+              "label": "Top"
+            },
+            {
+              "key": "bottom",
+              "label": "Bottom"
+            },
+            {
+              "key": "left",
+              "label": "Left"
+            },
+            {
+              "key": "right",
+              "label": "Right"
+            }
+          ],
+          "defaultValue": "right"
+        },
+        {
+          "name": {
+            "key": "Icon Padding (All Sides)"
+          },
+          "key": "iconPaddingAll",
+          "type": "number",
+          "hint": "Set padding around the icon on all sides. This overrides individual icon padding settings when set.",
+          "defaultValue": 0
+        },
+        {
+          "name": {
+            "key": "Icon Padding Top"
+          },
+          "key": "iconPaddingTop",
+          "type": "number",
+          "hint": "Set padding above the icon (px)",
+          "defaultValue": 0
+        },
+        {
+          "name": {
+            "key": "Icon Padding Right"
+          },
+          "key": "iconPaddingRight",
+          "type": "number",
+          "hint": "Set padding to the right of the icon (px)",
+          "defaultValue": 0
+        },
+        {
+          "name": {
+            "key": "Icon Padding Bottom"
+          },
+          "key": "iconPaddingBottom",
+          "type": "number",
+          "hint": "Set padding below the icon (px)",
+          "defaultValue": 0
+        },
+        {
+          "name": {
+            "key": "Icon Padding Left"
+          },
+          "key": "iconPaddingLeft",
+          "type": "number",
+          "hint": "Set padding to the left of the icon (px)",
+          "defaultValue": 20
+        }
+      ]
+    },
+    {
+      "name": {
+        "key": "Condition Label Settings"
+      },
+      "settings": [
+        {
+          "name": {
+            "key": "Show Condition Labels"
+          },
+          "key": "showConditionLabels",
+          "type": "boolean",
+          "hint": "Toggle to show or hide condition labels",
+          "defaultValue": true
+        },
+        {
+          "name": {
+            "key": "Condition Label Spacing"
+          },
+          "key": "conditionLabelSpacing",
+          "type": "number",
+          "hint": "Set the spacing around the condition labels (px)",
+          "defaultValue": 0
+        },
+        {
+          "name": {
+            "key": "Condition Label Position"
+          },
+          "key": "conditionLabelPosition",
+          "type": "dropdown",
+          "options": [
+            {
+              "key": "top-left",
+              "label": "Top Left"
+            },
+            {
+              "key": "top-right",
+              "label": "Top Right"
+            },
+            {
+              "key": "bottom-left",
+              "label": "Bottom Left"
+            },
+            {
+              "key": "bottom-right",
+              "label": "Bottom Right"
+            }
+          ],
+          "defaultValue": "top-left",
+          "hint": "Select the position of the condition label"
         }
       ]
     }
   ],
   "bindingsTrays": [
     {
+      "key": "tray-key-dim",
+      "name": {
+        "key": "BreakBy"
+      },
+      "queryRole": "row",
+      "minCount": 1,
+      "maxCount": 2
+    },
+    {
       "key": "tray-key",
       "name": {
-        "key": "tray"
+        "key": "Measures"
       },
       "queryRole": "measure",
       "minCount": 1,
+      "maxCount": 5,
       "settings": [
+        {
+          "name": "Number Format",
+          "settings": [
+            {
+              "name": "Scale",
+              "key": "scale1",
+              "type": "scale"
+            },
+            {
+              "name": "Format",
+              "key": "format",
+              "type": "number-format",
+              "defaultValue": "###,###"
+            },
+            {
+              "name": "Color",
+              "key": "color",
+              "type": "color"
+            },
+            {
+              "name": "Transparency",
+              "key": "transparency",
+              "type": "number",
+              "defaultValue": 70
+            }
+          ]
+        },
         {
           "name": "Conditional Formatting",
           "settings": [
