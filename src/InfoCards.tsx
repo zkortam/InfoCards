@@ -6,8 +6,8 @@ import {
   ResponseData,
   TContext
 } from '@incorta-org/component-sdk';
-import IconPicker from './IconPicker';  // Import the IconPicker component
-import './styles.less'; // Import your styles
+import IconPicker from './IconPicker';
+import './styles.less';
 
 interface Condition {
   value: string;
@@ -37,7 +37,6 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const settings = context?.component?.settings;
   const breakByTrayItems = context?.component?.bindings?.["tray-key-dim"] || [];
 
-  // Extract display settings
   const interiorColor = settings?.containerColor || "transparent";
   const interiorOpacity = settings?.containerOpacity ? settings.containerOpacity / 100 : 1;
   const borderColor = settings?.borderColor || "#000000";
@@ -47,30 +46,34 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const defaultTitle = settings?.title || "Data";
   const titleColor = settings?.titleColor || "#FFFFFF";
   const valueColor = settings?.valueColor || "#FFFFFF";
-  const titleFontWeight = settings?.titleFontWeight || "normal";
-  const valueFontWeight = settings?.valueFontWeight || "normal";
+
+  const titleFontWeight = settings?.titleFontWeight || "400";
+  const valueFontWeight = settings?.valueFontWeight || "400";
+
   const titleFontSize = settings?.titleFontSize || 14;
   const valueFontSize = settings?.valueFontSize || 24;
 
-  // Card Spacing settings
+  const alignment = settings?.textAlignment || "left";
+
   const horizontalSpacing = settings?.horizontalSpacing || 10;
   const verticalSpacing = settings?.verticalSpacing || 10;
 
-  // Card Padding settings
   const paddingTop = settings?.paddingTop || 0;
   const paddingRight = settings?.paddingRight || 0;
   const paddingBottom = settings?.paddingBottom || 0;
   const paddingLeft = settings?.paddingLeft || 0;
   const cardInternalPadding = settings?.cardInternalPadding || 0;
 
-  // Icon Size, Position, and Padding settings
   const iconSize = settings?.iconSize || 24;
-  const iconPosition = settings?.iconPosition || "right"; // Default to "right"
+  const iconPosition = settings?.iconPosition || "right";
   const iconPaddingAll = settings?.iconPaddingAll || 0;
   const iconPaddingTop = settings?.iconPaddingTop || 0;
   const iconPaddingRight = settings?.iconPaddingRight || 0;
   const iconPaddingBottom = settings?.iconPaddingBottom || 0;
   const iconPaddingLeft = settings?.iconPaddingLeft || 0;
+
+  const conditionLabelPosition = settings?.conditionLabelPosition || "top-left";
+  const conditionLabelSpacing = settings?.conditionLabelSpacing || 0;
 
   const [lists, setLists] = useState<number[][]>([]);
   const [titles, setTitles] = useState<string[]>([]);
@@ -84,8 +87,8 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const [pickerLeftPosition, setPickerLeftPosition] = useState<number>(0);
   const [currentColor, setCurrentColor] = useState<string>('#000000');
 
-  useEffect(() => {
-    if (breakByTrayItems.length === 1 && groupLabels.length === 0) {
+  const fetchData = () => {
+    if (breakByTrayItems.length === 1) {
       const dimensionLabels = data.data.map(row => row[0].value);
       setGroupLabels(dimensionLabels);
 
@@ -113,25 +116,27 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
         return binding?.settings?.conditions || [];
       });
       setConditions(extractedConditions);
-    } else if (breakByTrayItems.length === 2 && values.length === 0) {
-      if (data.data.length > 0) {
-        const measureValues = data.data.map(row => row.map(item => item.value || 0));
-        const numericValues = measureValues.flat().map(rawValue => typeof rawValue === 'string' ? parseFloat(rawValue) : rawValue);
-        setValues(numericValues.slice(0, 10));
+    } else if (breakByTrayItems.length === 0) {
+      const measureValues = data.data.map(row => row.map(item => item.value || 0));
+      const numericValues = measureValues.flat().map(rawValue => typeof rawValue === 'string' ? parseFloat(rawValue) : rawValue);
+      setValues(numericValues.slice(0, 10));
 
-        const headers = data.measureHeaders.map(header => {
-          const parts = header.label.split('.');
-          return parts[parts.length - 1] || defaultTitle;
-        });
-        setTitles(headers.slice(0, 10));
+      const headers = data.measureHeaders.map(header => {
+        const parts = header.label.split('.');
+        return parts[parts.length - 1] || defaultTitle;
+      });
+      setTitles(headers.slice(0, 10));
 
-        const extractedConditions = numericValues.map((_, index) => {
-          const binding = (context?.component?.bindings?.["tray-key"]?.[index] as unknown as Binding);
-          return binding?.settings?.conditions || [];
-        });
-        setConditions(extractedConditions);
-      }
+      const extractedConditions = numericValues.map((_, index) => {
+        const binding = (context?.component?.bindings?.["tray-key"]?.[index] as unknown as Binding);
+        return binding?.settings?.conditions || [];
+      });
+      setConditions(extractedConditions);
     }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [data]);
 
   const parseColor = (color: string, opacity: number) => {
@@ -218,7 +223,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const handleIconPick = (icon: string, color: string) => {
     if (selectedCardIndex !== null) {
       const newIcons = [...icons];
-      newIcons[selectedCardIndex] = { icon, color };
+      newIcons[selectedCardIndex] = { icon, color }; // Ensure the icon and color are updated correctly
       setIcons(newIcons);
       setIconPickerVisible(false);
       setSelectedCardIndex(null);
@@ -227,6 +232,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
 
   const handleColorChange = (color: string) => {
     if (selectedCardIndex !== null) {
+      setCurrentColor(color); // Update the color in the state
       const newIcons = [...icons];
       if (newIcons[selectedCardIndex].icon) {
         newIcons[selectedCardIndex].color = color;
@@ -265,6 +271,8 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       return {
         fontSize: `${iconSize}px`,
         padding: `${iconPaddingAll}px`,
+        cursor: 'pointer',
+        color: icons[selectedCardIndex ?? 0]?.color, // Apply the selected color to the icon
       };
     }
     return {
@@ -273,6 +281,8 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       paddingRight: `${iconPaddingRight}px`,
       paddingBottom: `${iconPaddingBottom}px`,
       paddingLeft: `${iconPaddingLeft}px`,
+      cursor: 'pointer',
+      color: icons[selectedCardIndex ?? 0]?.color, // Apply the selected color to the icon
     };
   };
 
@@ -288,6 +298,47 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       paddingBottom: `${paddingBottom}px`,
       paddingLeft: `${paddingLeft}px`,
     };
+  };
+
+  const getConditionLabelPositionStyle = (): CSSProperties => {
+    const spacing = `${conditionLabelSpacing}px`;
+    switch (conditionLabelPosition) {
+      case "top-left":
+        return {
+          top: spacing,
+          left: spacing,
+          height: '20px',
+          position: 'absolute',
+        };
+      case "top-right":
+        return {
+          top: spacing,
+          right: spacing,
+          height: '20px',
+          position: 'absolute',
+        };
+      case "bottom-left":
+        return {
+          bottom: spacing,
+          left: spacing,
+          height: '20px',
+          position: 'absolute',
+        };
+      case "bottom-right":
+        return {
+          bottom: spacing,
+          right: spacing,
+          height: '20px',
+          position: 'absolute',
+        };
+      default:
+        return {
+          top: spacing,
+          left: spacing,
+          height: '20px',
+          position: 'absolute',
+        };
+    }
   };
 
   const handlePlaceholderClick = (index: number) => {
@@ -324,79 +375,87 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                     border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
                     marginBottom: `${verticalSpacing}px`,
                     ...getCardPaddingStyle(),
+                    position: 'relative',
                   }}
                 >
                   <div style={getIconAndTextContainerStyle()}>
-                    {/* Icon Rendering */}
                     {icon ? (
-                      <div>
-                        <span className="material-icons" style={getIconStyle()}>
+                      <div onClick={() => handlePlaceholderClick(listIndex)}>
+                        <span className="material-icons" style={{ ...getIconStyle(), color: color }}>
                           {icon}
                         </span>
                       </div>
                     ) : (
                       <div
-                      className="icon-placeholder"
-                      onClick={() => handlePlaceholderClick(listIndex)}
+                        className="icon-placeholder"
+                        onClick={() => handlePlaceholderClick(listIndex)}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          width: "80px",
+                          height: "80px",
+                          border: "2px dashed #ccc",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          margin: iconPosition === "right" ? "0 0 0 30px" : iconPosition === "left" ? "0 30px 0 0" : iconPosition === "top" ? "0 0 30px 0" : "30px 0 0 0",
+                          minWidth: "80px",
+                          minHeight: "80px",
+                        }}
+                      >
+                        <span className="material-icons" style={{ color: "#ccc", fontSize: "24px" }}>add</span>
+                        <span style={{ color: "#666", fontSize: "12px", textAlign: "center" }}>Add Icon</span>
+                      </div>
+                    )}
+                    <div
+                      className="card-content"
                       style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        width: "80px",
-                        height: "80px",
-                        border: "2px dashed #ccc",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        ...(iconPosition === "right" && { marginLeft: "30px" }),  // 30px left if icon is on the right
-                        ...(iconPosition === "left" && { marginRight: "30px" }),   // 30px right if icon is on the left
-                        ...(iconPosition === "top" && { marginBottom: "30px" }),   // 30px bottom if icon is on top
-                        ...(iconPosition === "bottom" && { marginTop: "30px" }),   // 30px top if icon is on bottom
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start',
                       }}
                     >
-                      <span className="material-icons" style={{ color: "#ccc", fontSize: "24px" }}>add</span>
-                      <span style={{ color: "#666", fontSize: "12px" }}>Add Icon</span>
-                    </div>
-                    
-                    )}
-                    {/* Text Rendering */}
-                    <div>
                       {conditionLabel && (
-                        <div className="condition-label-container">
+                        <div className="condition-label-container" style={getConditionLabelPositionStyle()}>
                           <div
                             className="condition-label"
                             style={{
                               backgroundColor: getValueColor(value, listIndex),
+                              padding: '5px',
                               borderRadius: `${borderRadius}px`,
                               color: getValueColor(value, listIndex) === '#FFFFFF' ? '#000000' : '#FFFFFF',
+                              whiteSpace: 'nowrap',
+                              display: 'flex',
+                              alignItems: 'center',
                             }}
                           >
                             {conditionLabel}
                           </div>
                         </div>
                       )}
-                      <div className="card-content">
-                        <span
-                          className="card-title"
-                          style={{
-                            color: titleColor,
-                            fontWeight: titleFontWeight,
-                            fontSize: `${titleFontSize}px`,
-                          }}
-                        >
-                          {title}
-                        </span>
-                        <span
-                          className="card-value"
-                          style={{
-                            color: getValueColor(value, listIndex),
-                            fontWeight: valueFontWeight,
-                            fontSize: `${valueFontSize}px`,
-                          }}
-                        >
-                          {formattedValue}
-                        </span>
-                      </div>
+                      <span
+                        className="card-title"
+                        style={{
+                          color: titleColor,
+                          fontWeight: titleFontWeight,
+                          fontSize: `${titleFontSize}px`,
+                          textAlign: alignment,
+                        }}
+                      >
+                        {title}
+                      </span>
+                      <span
+                        className="card-value"
+                        style={{
+                          color: getValueColor(value, listIndex),
+                          fontWeight: valueFontWeight,
+                          fontSize: `${valueFontSize}px`,
+                          textAlign: alignment,
+                        }}
+                      >
+                        {formattedValue}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -431,13 +490,13 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               border: `${borderThickness}px solid ${parseColor(borderColor, borderOpacity)}`,
               marginBottom: `${verticalSpacing}px`,
               ...getCardPaddingStyle(),
+              position: 'relative',
             }}
           >
             <div style={getIconAndTextContainerStyle()}>
-              {/* Icon Rendering */}
               {icon ? (
-                <div>
-                  <span className="material-icons" style={getIconStyle()}>
+                <div onClick={() => handlePlaceholderClick(index)}>
+                  <span className="material-icons" style={{ ...getIconStyle(), color: color }}>
                     {icon}
                   </span>
                 </div>
@@ -461,44 +520,54 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                   <span style={{ color: "#666", fontSize: "12px" }}>+ Icon</span>
                 </div>
               )}
-              {/* Text Rendering */}
-              <div>
+              <div
+                className="card-content"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start',
+                }}
+              >
                 {conditionLabel && (
-                  <div className="condition-label-container">
+                  <div className="condition-label-container" style={getConditionLabelPositionStyle()}>
                     <div
                       className="condition-label"
                       style={{
                         backgroundColor: getValueColor(value, index),
+                        padding: '5px',
                         borderRadius: `${borderRadius}px`,
                         color: getValueColor(value, index) === '#FFFFFF' ? '#000000' : '#FFFFFF',
+                        whiteSpace: 'nowrap',
+                        display: 'flex',
+                        alignItems: 'center',
                       }}
                     >
                       {conditionLabel}
                     </div>
                   </div>
                 )}
-                <div className="card-content">
-                  <span
-                    className="card-title"
-                    style={{
-                      color: titleColor,
-                      fontWeight: titleFontWeight,
-                      fontSize: `${titleFontSize}px`,
-                    }}
-                  >
-                    {title}
-                  </span>
-                  <span
-                    className="card-value"
-                    style={{
-                      color: getValueColor(value, index),
-                      fontWeight: valueFontWeight,
-                      fontSize: `${valueFontSize}px`,
-                    }}
-                  >
-                    {formattedValue}
-                  </span>
-                </div>
+                <span
+                  className="card-title"
+                  style={{
+                    color: titleColor,
+                    fontWeight: titleFontWeight,
+                    fontSize: `${titleFontSize}px`,
+                    textAlign: alignment,
+                  }}
+                >
+                  {title}
+                </span>
+                <span
+                  className="card-value"
+                  style={{
+                    color: getValueColor(value, index),
+                    fontWeight: valueFontWeight,
+                    fontSize: `${valueFontSize}px`,
+                    textAlign: alignment,
+                  }}
+                >
+                  {formattedValue}
+                </span>
               </div>
             </div>
           </div>
