@@ -5,16 +5,24 @@ interface IconPickerProps {
   onClose: () => void;
   onColorChange: (color: string) => void;
   onRemoveIcon: () => void;
-  leftPosition: number; 
+  leftPosition: number;
   currentColor: string;
 }
 
-const IconPicker: React.FC<IconPickerProps> = ({ onPick, onClose, onColorChange, onRemoveIcon, leftPosition, currentColor }) => {
+const IconPicker: React.FC<IconPickerProps> = ({
+  onPick,
+  onClose,
+  onColorChange,
+  onRemoveIcon,
+  leftPosition,
+  currentColor,
+}) => {
   const [icons, setIcons] = useState<string[]>([]);
   const [search, setSearch] = useState<string>('');
-  const [color, setColor] = useState<string>(currentColor); 
+  const [color, setColor] = useState<string>(currentColor);
   const pickerRef = useRef<HTMLDivElement>(null);
 
+  // Fetch icons from Google Fonts metadata
   useEffect(() => {
     fetch('https://fonts.google.com/metadata/icons')
       .then((response) => response.text())
@@ -24,10 +32,12 @@ const IconPicker: React.FC<IconPickerProps> = ({ onPick, onClose, onColorChange,
       });
   }, []);
 
+  // Update the color whenever it changes
   useEffect(() => {
-    onColorChange(color); 
+    onColorChange(color);
   }, [color]);
 
+  // Close the picker when clicking outside of it
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
@@ -41,22 +51,26 @@ const IconPicker: React.FC<IconPickerProps> = ({ onPick, onClose, onColorChange,
     };
   }, [pickerRef]);
 
-  const filteredIcons = icons.filter(icon => icon.toLowerCase().includes(search.toLowerCase()));
+  // Filter icons based on the search query
+  const filteredIcons = icons.filter((icon) => icon.toLowerCase().includes(search.toLowerCase()));
 
+  // Handle icon selection
   const handleIconPick = (icon: string) => {
-    onPick(icon, color); 
-    onClose(); 
+    onPick(icon, color); // Pass the selected icon and color back to parent
+    onClose(); // Close the picker
   };
 
+  // Determine if the selected color is dark or light
   const isDarkColor = (color: string) => {
-    const rgb = parseInt(color.substring(1), 16); 
+    const rgb = parseInt(color.substring(1), 16);
     const r = (rgb >> 16) & 0xff;
-    const g = (rgb >>  8) & 0xff;
-    const b = (rgb >>  0) & 0xff;
+    const g = (rgb >> 8) & 0xff;
+    const b = (rgb >> 0) & 0xff;
     const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
     return luminance < 140;
   };
 
+  // Set text color based on background color brightness
   const textColor = isDarkColor(color) ? 'white' : 'black';
 
   return (
@@ -65,7 +79,7 @@ const IconPicker: React.FC<IconPickerProps> = ({ onPick, onClose, onColorChange,
       style={{
         position: 'fixed',
         top: '10%',
-        left: `${leftPosition}px`, 
+        left: `${leftPosition}px`,
         width: '300px',
         height: '400px',
         backgroundColor: 'white',
@@ -150,8 +164,6 @@ const IconPicker: React.FC<IconPickerProps> = ({ onPick, onClose, onColorChange,
           borderRadius: '9999px',
           border: '1px solid #ccc',
           fontSize: '16px',
-          marginLeft: '0px',
-          marginRight: '10px',
         }}
       />
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -159,7 +171,7 @@ const IconPicker: React.FC<IconPickerProps> = ({ onPick, onClose, onColorChange,
           <span
             key={icon}
             className="material-icons"
-            style={{ fontSize: '24px', cursor: 'pointer', color: color }} 
+            style={{ fontSize: '24px', cursor: 'pointer', color: color }} // Apply selected color to icon
             onClick={() => handleIconPick(icon)}
           >
             {icon}
