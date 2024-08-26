@@ -15,14 +15,6 @@
       "settings": [
         {
           "name": {
-            "key": "Default Title"
-          },
-          "key": "title",
-          "type": "text",
-          "hint": "Enter the title text"
-        },
-        {
-          "name": {
             "key": "Title Color"
           },
           "key": "titleColor",
@@ -47,31 +39,19 @@
           "type": "dropdown",
           "options": [
             {
-              "key": "thin",
-              "label": "Thin"
+              "key": "300",
+              "label": "Light"
             },
             {
-              "key": "semi-thin",
-              "label": "Semi-Thin"
-            },
-            {
-              "key": "normal",
+              "key": "400",
               "label": "Normal"
             },
             {
-              "key": "medium",
-              "label": "Medium"
-            },
-            {
-              "key": "bold",
+              "key": "700",
               "label": "Bold"
-            },
-            {
-              "key": "extra-bold",
-              "label": "Extra Bold"
             }
           ],
-          "defaultValue": "normal",
+          "defaultValue": "400",
           "hint": "Select the title font weight"
         },
         {
@@ -82,31 +62,19 @@
           "type": "dropdown",
           "options": [
             {
-              "key": "thin",
-              "label": "Thin"
+              "key": "300",
+              "label": "Light"
             },
             {
-              "key": "semi-thin",
-              "label": "Semi-Thin"
-            },
-            {
-              "key": "normal",
+              "key": "400",
               "label": "Normal"
             },
             {
-              "key": "medium",
-              "label": "Medium"
-            },
-            {
-              "key": "bold",
+              "key": "700",
               "label": "Bold"
-            },
-            {
-              "key": "extra-bold",
-              "label": "Extra Bold"
             }
           ],
-          "defaultValue": "normal",
+          "defaultValue": "400",
           "hint": "Select the value font weight"
         },
         {
@@ -126,6 +94,29 @@
           "type": "number",
           "hint": "Set the font size of the value (px)",
           "defaultValue": 24
+        },
+        {
+          "name": {
+            "key": "Text Alignment"
+          },
+          "key": "textAlignment",
+          "type": "dropdown",
+          "options": [
+            {
+              "key": "left",
+              "label": "Left"
+            },
+            {
+              "key": "center",
+              "label": "Center"
+            },
+            {
+              "key": "right",
+              "label": "Right"
+            }
+          ],
+          "defaultValue": "left",
+          "hint": "Align text left, center, or right"
         },
         {
           "name": {
@@ -227,7 +218,7 @@
           "key": "paddingTop",
           "type": "number",
           "hint": "Set padding above the card content (px)",
-          "defaultValue": 0
+          "defaultValue": 10
         },
         {
           "name": {
@@ -236,7 +227,7 @@
           "key": "paddingRight",
           "type": "number",
           "hint": "Set padding to the right of the card content (px)",
-          "defaultValue": 0
+          "defaultValue": 10
         },
         {
           "name": {
@@ -245,7 +236,7 @@
           "key": "paddingBottom",
           "type": "number",
           "hint": "Set padding below the card content (px)",
-          "defaultValue": 0
+          "defaultValue": 10
         },
         {
           "name": {
@@ -254,7 +245,7 @@
           "key": "paddingLeft",
           "type": "number",
           "hint": "Set padding to the left of the card content (px)",
-          "defaultValue": 0
+          "defaultValue": 10
         }
       ]
     },
@@ -270,7 +261,7 @@
           "key": "iconSize",
           "type": "number",
           "hint": "Select the icon size (px)",
-          "defaultValue": 24
+          "defaultValue": 40
         },
         {
           "name": {
@@ -341,6 +332,31 @@
           "key": "iconPaddingLeft",
           "type": "number",
           "hint": "Set padding to the left of the icon (px)",
+          "defaultValue": 20
+        }
+      ]
+    },
+    {
+      "name": {
+        "key": "Condition Label Settings"
+      },
+      "settings": [
+        {
+          "name": {
+            "key": "Show Condition Labels"
+          },
+          "key": "showConditionLabels",
+          "type": "boolean",
+          "hint": "Toggle to show or hide condition labels",
+          "defaultValue": true
+        },
+        {
+          "name": {
+            "key": "Condition Label Spacing"
+          },
+          "key": "conditionLabelSpacing",
+          "type": "number",
+          "hint": "Set the spacing around the condition labels (px)",
           "defaultValue": 0
         }
       ]
@@ -353,8 +369,7 @@
         "key": "BreakBy"
       },
       "queryRole": "row",
-      "minCount": 1,
-      "maxCount": 2
+      "maxCount": 1
     },
     {
       "key": "tray-key",
