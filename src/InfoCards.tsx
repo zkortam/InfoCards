@@ -34,8 +34,7 @@ interface IconSettings {
 }
 
 const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
-  // @ts-ignore
-  const isDashboardView = !!context.app.dashboardViewMode;
+  const isDashboardView = !!(context.app as any).dashboardViewMode;
 
   const settings = context?.component?.settings;
   const breakByTrayItems = context?.component?.bindings?.["tray-key-dim"] || [];
@@ -138,9 +137,37 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     }
   };
 
+  const fetchIconsFromAPI = async () => {
+    try {
+      const response = await fetch('https://fonts.google.com/metadata/icons');
+      const data = await response.text();
+      const json = JSON.parse(data.replace(")]}'", ''));
+      const iconNames = json.icons.map((icon: any) => icon.name);
+
+      const initialIcons = iconNames.slice(0, 50).map((iconName: string) => ({
+        icon: iconName,
+        color: '#000000',
+      }));
+
+      setIcons(initialIcons);
+    } catch (error) {
+      console.error("Error fetching icons:", error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
-  }, [data]);
+
+    if (isDashboardView) {
+      fetchIconsFromAPI();
+    }
+  }, [data, isDashboardView]);
+
+  useEffect(() => {
+    if (!isDashboardView && context.component?.settings) {
+      context.component.settings.icons = icons;
+    }
+  }, [icons, isDashboardView, context.component]);
 
   const parseColor = (color: string, opacity: number) => {
     const hex = color.replace('#', '');
@@ -226,7 +253,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const handleIconPick = (icon: string, color: string) => {
     if (selectedCardIndex !== null) {
       const newIcons = [...icons];
-      newIcons[selectedCardIndex] = { icon, color }; // Ensure the icon and color are updated correctly
+      newIcons[selectedCardIndex] = { icon, color };
       setIcons(newIcons);
       setIconPickerVisible(false);
       setSelectedCardIndex(null);
@@ -235,7 +262,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
 
   const handleColorChange = (color: string) => {
     if (selectedCardIndex !== null) {
-      setCurrentColor(color); // Update the color in the state
+      setCurrentColor(color);
       const newIcons = [...icons];
       if (newIcons[selectedCardIndex].icon) {
         newIcons[selectedCardIndex].color = color;
@@ -269,13 +296,13 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     }
   };
 
-  const getIconStyle = (): CSSProperties => {
+  const getIconStyle = (index: number): CSSProperties => {
     if (iconPaddingAll !== 0) {
       return {
         fontSize: `${iconSize}px`,
         padding: `${iconPaddingAll}px`,
         cursor: 'pointer',
-        color: icons[selectedCardIndex ?? 0]?.color, // Apply the selected color to the icon
+        color: icons[index]?.color,
       };
     }
     return {
@@ -285,7 +312,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       paddingBottom: `${iconPaddingBottom}px`,
       paddingLeft: `${iconPaddingLeft}px`,
       cursor: 'pointer',
-      color: icons[selectedCardIndex ?? 0]?.color, // Apply the selected color to the icon
+      color: icons[index]?.color,
     };
   };
 
@@ -384,7 +411,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                   <div style={getIconAndTextContainerStyle()}>
                     {icon && (
                       <div onClick={() => !isDashboardView && handlePlaceholderClick(listIndex)}>
-                        <span className="material-icons" style={{ ...getIconStyle(), color: color }}>
+                        <span className="material-icons" style={getIconStyle(listIndex)}>
                           {icon}
                         </span>
                       </div>
@@ -509,7 +536,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
             <div style={getIconAndTextContainerStyle()}>
               {icon && (
                 <div onClick={() => !isDashboardView && handlePlaceholderClick(index)}>
-                  <span className="material-icons" style={{ ...getIconStyle(), color: color }}>
+                  <span className="material-icons" style={getIconStyle(index)}>
                     {icon}
                   </span>
                 </div>
