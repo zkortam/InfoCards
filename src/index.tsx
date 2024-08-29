@@ -17,7 +17,7 @@ document.head.appendChild(link);
 
 export default () => {
   const { prompts, drillDown } = usePrompts();
-  const { data, context, isLoading, isError, error } = useQuery(useContext(), prompts, { refetchInterval: 5000 });
+  const { data, context, isLoading, isError, error } = useQuery(useContext(), prompts);
   
   return (
     <ErrorOverlay isError={isError} error={error}>
