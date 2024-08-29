@@ -9,7 +9,7 @@ import {
 import InfoCards from './InfoCards';
 import './styles.less';
 
-// Load Google Fonts Icons Stylesheet
+// Ensure Material Icons stylesheet is loaded
 const link = document.createElement('link');
 link.href = 'https://fonts.googleapis.com/icon?family=Material+Icons';
 link.rel = 'stylesheet';
@@ -17,7 +17,8 @@ document.head.appendChild(link);
 
 export default () => {
   const { prompts, drillDown } = usePrompts();
-  const { data, context, isLoading, isError, error } = useQuery(useContext(), prompts);
+  const { data, context, isLoading, isError, error } = useQuery(useContext(), prompts, { refetchInterval: 5000 });
+  
   return (
     <ErrorOverlay isError={isError} error={error}>
       <LoadingOverlay isLoading={isLoading} data={data}>
