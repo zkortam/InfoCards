@@ -34,6 +34,9 @@ interface IconSettings {
 }
 
 const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
+  // @ts-ignore
+  const isDashboardView = !!context.app.dashboardViewMode;
+
   const settings = context?.component?.settings;
   const breakByTrayItems = context?.component?.bindings?.["tray-key-dim"] || [];
 
@@ -379,13 +382,14 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                   }}
                 >
                   <div style={getIconAndTextContainerStyle()}>
-                    {icon ? (
-                      <div onClick={() => handlePlaceholderClick(listIndex)}>
+                    {icon && (
+                      <div onClick={() => !isDashboardView && handlePlaceholderClick(listIndex)}>
                         <span className="material-icons" style={{ ...getIconStyle(), color: color }}>
                           {icon}
                         </span>
                       </div>
-                    ) : (
+                    )}
+                    {!isDashboardView && !icon && (
                       <div
                         className="icon-placeholder"
                         onClick={() => handlePlaceholderClick(listIndex)}
@@ -399,12 +403,21 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                           border: "2px dashed #ccc",
                           borderRadius: "8px",
                           cursor: "pointer",
-                          margin: iconPosition === "right" ? "0 0 0 30px" : iconPosition === "left" ? "0 30px 0 0" : iconPosition === "top" ? "0 0 30px 0" : "30px 0 0 0",
+                          margin:
+                            iconPosition === "right"
+                              ? "0 0 0 30px"
+                              : iconPosition === "left"
+                              ? "0 30px 0 0"
+                              : iconPosition === "top"
+                              ? "0 0 30px 0"
+                              : "30px 0 0 0",
                           minWidth: "80px",
                           minHeight: "80px",
                         }}
                       >
-                        <span className="material-icons" style={{ color: "#ccc", fontSize: "24px" }}>add</span>
+                        <span className="material-icons" style={{ color: "#ccc", fontSize: "24px" }}>
+                          add
+                        </span>
                         <span style={{ color: "#666", fontSize: "12px", textAlign: "center" }}>Add Icon</span>
                       </div>
                     )}
@@ -494,13 +507,14 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
             }}
           >
             <div style={getIconAndTextContainerStyle()}>
-              {icon ? (
-                <div onClick={() => handlePlaceholderClick(index)}>
+              {icon && (
+                <div onClick={() => !isDashboardView && handlePlaceholderClick(index)}>
                   <span className="material-icons" style={{ ...getIconStyle(), color: color }}>
                     {icon}
                   </span>
                 </div>
-              ) : (
+              )}
+              {!isDashboardView && !icon && (
                 <div
                   className="icon-placeholder"
                   onClick={() => handlePlaceholderClick(index)}
@@ -517,7 +531,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                   }}
                 >
                   <span className="material-icons" style={{ color: "#ccc", fontSize: "24px" }}>add</span>
-                  <span style={{ color: "#666", fontSize: "12px" }}>+ Icon</span>
+                  <span style={{ color: "#666", fontSize: "12px" }}>Add Icon</span>
                 </div>
               )}
               <div
