@@ -366,7 +366,7 @@
     {
       "key": "tray-key-dim",
       "name": {
-        "key": "BreakBy"
+        "key": "Break"
       },
       "queryRole": "row",
       "maxCount": 1
