@@ -36,6 +36,24 @@ interface IconSettings {
 const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const isDashboardView = !!(context.app as any).dashboardViewMode;
 
+  // State to hold window size
+  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+
+  // Update window size on resize
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    // Add event listener for window resize
+    window.addEventListener('resize', handleResize);
+
+    // Remove event listener on cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   const settings = context?.component?.settings;
   const breakByTrayItems = context?.component?.bindings?.["tray-key-dim"] || [];
 
@@ -59,6 +77,10 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
 
   const horizontalSpacing = settings?.horizontalSpacing || 10;
   const verticalSpacing = settings?.verticalSpacing || 10;
+  const groupSpacing = settings?.groupSpacing || 20; // Group spacing applied both horizontally and vertically
+
+  const groupTitleSize = settings?.groupTitleSize || 16; // New group title size setting
+  const groupTitleColor = settings?.groupTitleColor || "#000000"; // New group title color setting
 
   const paddingTop = settings?.paddingTop || 0;
   const paddingRight = settings?.paddingRight || 0;
@@ -376,11 +398,37 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     setIconPickerVisible(true);
   };
 
-  const renderGroupedCards = () => (
-    <div className="info-cards-container">
-      {groupLabels.map((groupLabel, indexGroup) => (
-        <React.Fragment key={indexGroup}>
-          {groupLabel && <div className="group-label">{groupLabel}</div>}
+  // Calculate the total width of a single card
+  const calculateCardWidth = () => {
+    const cardContentWidth = 100; // Assume a base content width for each card
+    const totalPadding = paddingLeft + paddingRight + 2 * cardInternalPadding;
+    const totalWidth = cardContentWidth + totalPadding + horizontalSpacing;
+    return totalWidth;
+  };
+
+  // Calculate the total width of a single group
+  const calculateGroupWidth = () => {
+    const cardWidth = calculateCardWidth();
+    const measuresPerGroup = lists.length / groupLabels.length; // Number of measure items per group
+    const totalWidth = (cardWidth * measuresPerGroup) + groupSpacing; // Use groupSpacing here
+    return totalWidth;
+  };
+
+  // Calculate the number of groups per row
+  const groupsPerRow = Math.floor(windowSize.width / calculateGroupWidth());
+
+  const renderGroupedCards = () => {
+    const totalGroups = groupLabels.length;
+    const rows = [];
+
+    for (let i = 0; i < totalGroups; i += groupsPerRow) {
+      const groupsInRow = groupLabels.slice(i, i + groupsPerRow).map((groupLabel, indexGroup) => (
+        <div className="group" key={`group-${indexGroup}`} style={{ display: 'inline-block', marginRight: `${groupSpacing}px`, marginBottom: `${groupSpacing}px` }}>
+          {groupLabel && (
+            <div className="group-label" style={{ fontSize: `${groupTitleSize}px`, color: groupTitleColor, marginBottom: `${groupSpacing / 2}px` }}>
+              {groupLabel}
+            </div>
+          )}
           <div
             className="grouped-cards"
             style={{
@@ -502,10 +550,13 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               );
             })}
           </div>
-        </React.Fragment>
-      ))}
-    </div>
-  );
+        </div>
+      ));
+      rows.push(<div className="row" key={`row-${i}`} style={{ display: 'flex', flexWrap: 'wrap' }}>{groupsInRow}</div>);
+    }
+
+    return <div className="info-cards-container">{rows}</div>;
+  };
 
   const renderIndividualCards = () => (
     <div
@@ -514,6 +565,12 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
         gap: `${horizontalSpacing}px`,
       }}
     >
+      {/* Display the width and height of the window */}
+      <div className="window-size">
+        <p>Window Width: {windowSize.width}px</p>
+        <p>Window Height: {windowSize.height}px</p>
+      </div>
+
       {values.filter(value => value !== 0).map((value, index) => {
         const formattedValue = formatNumber(value);
         const conditionLabel = getConditionLabel(value, index);
