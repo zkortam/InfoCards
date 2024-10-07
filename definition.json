@@ -15,14 +15,6 @@
       "settings": [
         {
           "name": {
-            "key": "Default Title"
-          },
-          "key": "title",
-          "type": "text",
-          "hint": "Enter the title text"
-        },
-        {
-          "name": {
             "key": "Title Color"
           },
           "key": "titleColor",
@@ -47,31 +39,19 @@
           "type": "dropdown",
           "options": [
             {
-              "key": "thin",
-              "label": "Thin"
+              "key": "300",
+              "label": "Light"
             },
             {
-              "key": "semi-thin",
-              "label": "Semi-Thin"
-            },
-            {
-              "key": "normal",
+              "key": "400",
               "label": "Normal"
             },
             {
-              "key": "medium",
-              "label": "Medium"
-            },
-            {
-              "key": "bold",
+              "key": "700",
               "label": "Bold"
-            },
-            {
-              "key": "extra-bold",
-              "label": "Extra Bold"
             }
           ],
-          "defaultValue": "normal",
+          "defaultValue": "400",
           "hint": "Select the title font weight"
         },
         {
@@ -82,31 +62,19 @@
           "type": "dropdown",
           "options": [
             {
-              "key": "thin",
-              "label": "Thin"
+              "key": "300",
+              "label": "Light"
             },
             {
-              "key": "semi-thin",
-              "label": "Semi-Thin"
-            },
-            {
-              "key": "normal",
+              "key": "400",
               "label": "Normal"
             },
             {
-              "key": "medium",
-              "label": "Medium"
-            },
-            {
-              "key": "bold",
+              "key": "700",
               "label": "Bold"
-            },
-            {
-              "key": "extra-bold",
-              "label": "Extra Bold"
             }
           ],
-          "defaultValue": "normal",
+          "defaultValue": "400",
           "hint": "Select the value font weight"
         },
         {
@@ -126,6 +94,29 @@
           "type": "number",
           "hint": "Set the font size of the value (px)",
           "defaultValue": 24
+        },
+        {
+          "name": {
+            "key": "Text Alignment"
+          },
+          "key": "textAlignment",
+          "type": "dropdown",
+          "options": [
+            {
+              "key": "left",
+              "label": "Left"
+            },
+            {
+              "key": "center",
+              "label": "Center"
+            },
+            {
+              "key": "right",
+              "label": "Right"
+            }
+          ],
+          "defaultValue": "left",
+          "hint": "Align text left, center, or right"
         },
         {
           "name": {
@@ -260,6 +251,40 @@
     },
     {
       "name": {
+        "key": "Group Settings"
+      },
+      "settings": [
+        {
+          "name": {
+            "key": "Group Spacing"
+          },
+          "key": "groupSpacing",
+          "type": "number",
+          "hint": "Set the spacing between groups (px)",
+          "defaultValue": 20
+        },
+        {
+          "name": {
+            "key": "Group Title Size"
+          },
+          "key": "groupTitleSize",
+          "type": "number",
+          "hint": "Set the font size of the group title (px)",
+          "defaultValue": 16
+        },
+        {
+          "name": {
+            "key": "Group Title Color"
+          },
+          "key": "groupTitleColor",
+          "type": "color",
+          "hint": "Select the font color for the group title",
+          "defaultValue": "#000000"
+        }
+      ]
+    },
+    {
+      "name": {
         "key": "Icon Settings"
       },
       "settings": [
@@ -367,33 +392,6 @@
           "type": "number",
           "hint": "Set the spacing around the condition labels (px)",
           "defaultValue": 0
-        },
-        {
-          "name": {
-            "key": "Condition Label Position"
-          },
-          "key": "conditionLabelPosition",
-          "type": "dropdown",
-          "options": [
-            {
-              "key": "top-left",
-              "label": "Top Left"
-            },
-            {
-              "key": "top-right",
-              "label": "Top Right"
-            },
-            {
-              "key": "bottom-left",
-              "label": "Bottom Left"
-            },
-            {
-              "key": "bottom-right",
-              "label": "Bottom Right"
-            }
-          ],
-          "defaultValue": "top-left",
-          "hint": "Select the position of the condition label"
         }
       ]
     }
@@ -402,11 +400,10 @@
     {
       "key": "tray-key-dim",
       "name": {
-        "key": "BreakBy"
+        "key": "Break"
       },
       "queryRole": "row",
-      "minCount": 1,
-      "maxCount": 2
+      "maxCount": 1
     },
     {
       "key": "tray-key",
