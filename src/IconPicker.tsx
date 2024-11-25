@@ -6,7 +6,7 @@ interface IconPickerProps {
   onColorChange: (color: string) => void;
   onRemoveIcon: () => void;
   leftPosition: number;
-  currentColor: string;
+  currentColor: string;  // Use currentColor from props, not from local state
 }
 
 const IconPicker: React.FC<IconPickerProps> = ({
@@ -19,7 +19,6 @@ const IconPicker: React.FC<IconPickerProps> = ({
 }) => {
   const [icons, setIcons] = useState<string[]>([]);
   const [search, setSearch] = useState<string>('');
-  const [color, setColor] = useState<string>(currentColor);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   // Fetch icons from Google Fonts metadata
@@ -36,11 +35,6 @@ const IconPicker: React.FC<IconPickerProps> = ({
     };
     fetchIcons();
   }, []);
-
-  // Update the color whenever it changes
-  useEffect(() => {
-    onColorChange(color);
-  }, [color, onColorChange]);
 
   // Close the picker when clicking outside of it
   useEffect(() => {
@@ -61,7 +55,7 @@ const IconPicker: React.FC<IconPickerProps> = ({
 
   // Handle icon selection
   const handleIconPick = (icon: string) => {
-    onPick(icon, color); // Pass the selected icon and color back to parent
+    onPick(icon, currentColor); // Pass the selected icon and current color back to parent
     onClose(); // Close the picker
   };
 
@@ -76,7 +70,7 @@ const IconPicker: React.FC<IconPickerProps> = ({
   };
 
   // Set text color based on background color brightness
-  const textColor = isDarkColor(color) ? 'white' : 'black';
+  const textColor = isDarkColor(currentColor) ? 'white' : 'black';
 
   return (
     <div
@@ -138,7 +132,7 @@ const IconPicker: React.FC<IconPickerProps> = ({
           style={{
             padding: '10px 20px',
             borderRadius: '9999px',
-            backgroundColor: color,
+            backgroundColor: currentColor, // Use currentColor prop
             color: textColor,
             border: 'none',
             cursor: 'pointer',
@@ -150,8 +144,8 @@ const IconPicker: React.FC<IconPickerProps> = ({
         <input
           type="color"
           id="colorPicker"
-          value={color}
-          onChange={(e) => setColor(e.target.value)}
+          value={currentColor} // Bind color input value from props
+          onChange={(e) => onColorChange(e.target.value)} // Pass color change to parent
           style={{
             display: 'none',
           }}
@@ -160,7 +154,7 @@ const IconPicker: React.FC<IconPickerProps> = ({
       <input
         type="text"
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e) => setSearch(e.target.value)} // Update the search state
         placeholder="Search icons..."
         style={{
           width: 'calc(100% - 20px)',
@@ -176,8 +170,12 @@ const IconPicker: React.FC<IconPickerProps> = ({
           <span
             key={icon}
             className="material-icons"
-            style={{ fontSize: '24px', cursor: 'pointer', color: color }} // Apply selected color to icon
-            onClick={() => handleIconPick(icon)}
+            style={{
+              fontSize: '24px',
+              cursor: 'pointer',
+              color: currentColor, // Apply the current color to the icon in IconPicker
+            }}
+            onClick={() => handleIconPick(icon)} // Handle icon selection
           >
             {icon}
           </span>
