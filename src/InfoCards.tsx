@@ -4,7 +4,8 @@ import {
   Context,
   onDrillDownFunction,
   ResponseData,
-  TContext
+  TContext,
+  usePrivateData, // Import the PrivateData API
 } from '@incorta-org/component-sdk';
 import IconPicker from './IconPicker';
 import './styles.less';
@@ -36,8 +37,19 @@ interface IconSettings {
 const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const isDashboardView = !!(context.app as any).dashboardViewMode;
 
+  // Use the PrivateData API to store and retrieve icon data
+  const { privateData, setPrivateData } = usePrivateData();
+
   // State to hold window size
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+
+  // Store icons per measure instead of per card or group
+  const [measureIcons, setMeasureIcons] = useState<{ [measure: string]: IconSettings }>(privateData?.measureIcons || {});
+
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
+  const [iconPickerVisible, setIconPickerVisible] = useState(false);
+  const [pickerLeftPosition, setPickerLeftPosition] = useState<number>(0);
+  const [currentColor, setCurrentColor] = useState<string>('#000000');
 
   // Update window size on resize
   useEffect(() => {
@@ -45,10 +57,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       setWindowSize({ width: window.innerWidth, height: window.innerHeight });
     };
 
-    // Add event listener for window resize
     window.addEventListener('resize', handleResize);
-
-    // Remove event listener on cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
     };
@@ -104,12 +113,6 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const [conditions, setConditions] = useState<Condition[][]>([]);
   const [groupLabels, setGroupLabels] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
-  const [icons, setIcons] = useState<IconSettings[]>(Array(50).fill({ icon: '', color: '#000000' }));
-
-  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
-  const [iconPickerVisible, setIconPickerVisible] = useState(false);
-  const [pickerLeftPosition, setPickerLeftPosition] = useState<number>(0);
-  const [currentColor, setCurrentColor] = useState<string>('#000000');
 
   const fetchData = () => {
     if (breakByTrayItems.length === 1) {
@@ -159,37 +162,14 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     }
   };
 
-  const fetchIconsFromAPI = async () => {
-    try {
-      const response = await fetch('https://fonts.google.com/metadata/icons');
-      const data = await response.text();
-      const json = JSON.parse(data.replace(")]}'", ''));
-      const iconNames = json.icons.map((icon: any) => icon.name);
-
-      const initialIcons = iconNames.slice(0, 50).map((iconName: string) => ({
-        icon: iconName,
-        color: '#000000',
-      }));
-
-      setIcons(initialIcons);
-    } catch (error) {
-      console.error("Error fetching icons:", error);
-    }
-  };
-
   useEffect(() => {
     fetchData();
+  }, [data]);
 
-    if (isDashboardView) {
-      fetchIconsFromAPI();
-    }
-  }, [data, isDashboardView]);
-
+  // Save the current measureIcons state to PrivateData when measureIcons state changes
   useEffect(() => {
-    if (!isDashboardView && context.component?.settings) {
-      context.component.settings.icons = icons;
-    }
-  }, [icons, isDashboardView, context.component]);
+    setPrivateData({ measureIcons });
+  }, [measureIcons]);
 
   const parseColor = (color: string, opacity: number) => {
     const hex = color.replace('#', '');
@@ -252,31 +232,41 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
 
   const getValueColor = (value: number, index: number) => {
     const sortedConditions = conditions[index]?.sort((a, b) => parseFloat(a.value) - parseFloat(b.value)) || [];
-    if (!sortedConditions.length) return valueColor;
+    if (!sortedConditions.length){
+      return valueColor;
+    }
     for (const condition of sortedConditions) {
       const threshold = parseFloat(condition.value);
-      if (condition.op === '<' && value < threshold) return condition.color;
-      if (condition.op === '>' && value > threshold) return condition.color;
-      if (condition.op === '=' && value === threshold) return condition.color;
-      if (condition.op === '<=' && value <= threshold) return condition.color;
-      if (condition.op === '>=' && value >= threshold) return condition.color;
+      if (condition.op === '<' && value < threshold) 
+        return condition.color;
+      if (condition.op === '>' && value > threshold) 
+        return condition.color;
+      if (condition.op === '=' && value === threshold)
+        return condition.color;
+      if (condition.op === '<=' && value <= threshold) 
+        return condition.color;
+      if (condition.op === '>=' && value >= threshold) 
+        return condition.color;
     }
     return valueColor;
   };
 
-  const handleCardRightClick = (index: number, event: React.MouseEvent) => {
+  const handleCardRightClick = (groupIndex: number, cardIndex: number, event: React.MouseEvent) => {
     event.preventDefault();
-    setSelectedCardIndex(index);
+    setSelectedCardIndex(cardIndex);
     setPickerLeftPosition(event.currentTarget.getBoundingClientRect().left);
-    setCurrentColor(icons[index].color);
+    const selectedMeasure = titles[cardIndex];
+    setCurrentColor(measureIcons[selectedMeasure]?.color || '#000000');
     setIconPickerVisible(true);
   };
 
   const handleIconPick = (icon: string, color: string) => {
     if (selectedCardIndex !== null) {
-      const newIcons = [...icons];
-      newIcons[selectedCardIndex] = { icon, color };
-      setIcons(newIcons);
+      const selectedMeasure = titles[selectedCardIndex]; // Identify measure name
+      setMeasureIcons((prevIcons) => ({
+        ...prevIcons,
+        [selectedMeasure]: { icon, color }, // Update icon and color for the selected measure
+      }));
       setIconPickerVisible(false);
       setSelectedCardIndex(null);
     }
@@ -284,20 +274,21 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
 
   const handleColorChange = (color: string) => {
     if (selectedCardIndex !== null) {
-      setCurrentColor(color);
-      const newIcons = [...icons];
-      if (newIcons[selectedCardIndex].icon) {
-        newIcons[selectedCardIndex].color = color;
-        setIcons(newIcons);
-      }
+      const selectedMeasure = titles[selectedCardIndex]; // Identify measure name
+      setMeasureIcons((prevIcons) => ({
+        ...prevIcons,
+        [selectedMeasure]: { icon: prevIcons[selectedMeasure]?.icon || '', color },
+      }));
     }
   };
 
   const handleRemoveIcon = () => {
     if (selectedCardIndex !== null) {
-      const newIcons = [...icons];
-      newIcons[selectedCardIndex] = { icon: '', color: '#000000' };
-      setIcons(newIcons);
+      const selectedMeasure = titles[selectedCardIndex]; // Identify measure name
+      setMeasureIcons((prevIcons) => ({
+        ...prevIcons,
+        [selectedMeasure]: { icon: '', color: '#000000' }, // Remove icon
+      }));
       setIconPickerVisible(false);
       setSelectedCardIndex(null);
     }
@@ -318,13 +309,14 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     }
   };
 
-  const getIconStyle = (index: number): CSSProperties => {
+  const getIconStyle = (measure: string): CSSProperties => {
+    const iconSettings = measureIcons[measure] || { icon: '', color: '#000000' };
     if (iconPaddingAll !== 0) {
       return {
         fontSize: `${iconSize}px`,
         padding: `${iconPaddingAll}px`,
         cursor: 'pointer',
-        color: icons[index]?.color,
+        color: iconSettings.color,
       };
     }
     return {
@@ -334,7 +326,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       paddingBottom: `${iconPaddingBottom}px`,
       paddingLeft: `${iconPaddingLeft}px`,
       cursor: 'pointer',
-      color: icons[index]?.color,
+      color: iconSettings.color,
     };
   };
 
@@ -393,8 +385,8 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
     }
   };
 
-  const handlePlaceholderClick = (index: number) => {
-    setSelectedCardIndex(index);
+  const handlePlaceholderClick = (groupIndex: number, cardIndex: number) => {
+    setSelectedCardIndex(cardIndex);
     setIconPickerVisible(true);
   };
 
@@ -420,7 +412,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
   const renderGroupedCards = () => {
     const totalGroups = groupLabels.length;
     const rows = [];
-
+  
     for (let i = 0; i < totalGroups; i += groupsPerRow) {
       const groupsInRow = groupLabels.slice(i, i + groupsPerRow).map((groupLabel, indexGroup) => (
         <div className="group" key={`group-${indexGroup}`} style={{ display: 'inline-block', marginRight: `${groupSpacing}px`, marginBottom: `${groupSpacing}px` }}>
@@ -441,8 +433,10 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
               const formattedValue = formatNumber(value);
               const conditionLabel = getConditionLabel(value, listIndex);
               const title = titles[listIndex] || defaultTitle;
-              const { icon, color } = icons[listIndex];
-
+  
+              // Retrieve the global icon and color for the current measure
+              const iconSettings = measureIcons[title] || { icon: '', color: '#000000' };
+  
               return (
                 <div
                   key={`${listIndex}-${indexGroup}`}
@@ -457,44 +451,36 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
                   }}
                 >
                   <div style={getIconAndTextContainerStyle()}>
-                    {icon && (
-                      <div onClick={() => !isDashboardView && handlePlaceholderClick(listIndex)}>
-                        <span className="material-icons" style={getIconStyle(listIndex)}>
-                          {icon}
+                    {iconSettings.icon ? (
+                      <div onClick={() => !isDashboardView && handlePlaceholderClick(indexGroup, listIndex)}>
+                        <span className="material-icons" style={getIconStyle(title)}>
+                          {iconSettings.icon}
                         </span>
                       </div>
-                    )}
-                    {!isDashboardView && !icon && (
-                      <div
-                        className="icon-placeholder"
-                        onClick={() => handlePlaceholderClick(listIndex)}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          width: "80px",
-                          height: "80px",
-                          border: "2px dashed #ccc",
-                          borderRadius: "8px",
-                          cursor: "pointer",
-                          margin:
-                            iconPosition === "right"
-                              ? "0 0 0 30px"
-                              : iconPosition === "left"
-                              ? "0 30px 0 0"
-                              : iconPosition === "top"
-                              ? "0 0 30px 0"
-                              : "30px 0 0 0",
-                          minWidth: "80px",
-                          minHeight: "80px",
-                        }}
-                      >
-                        <span className="material-icons" style={{ color: "#ccc", fontSize: "24px" }}>
-                          add
-                        </span>
-                        <span style={{ color: "#666", fontSize: "12px", textAlign: "center" }}>Add Icon</span>
-                      </div>
+                    ) : (
+                      !isDashboardView && (
+                        <div
+                          className="icon-placeholder"
+                          onClick={() => handlePlaceholderClick(indexGroup, listIndex)}
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            width: "80px",
+                            height: "80px",
+                            border: "2px dashed #ccc",
+                            borderRadius: "8px",
+                            cursor: 'pointer',
+                            margin: iconPosition === "right" ? "0 0 0 30px" : "0 30px 0 0",
+                            minWidth: "80px",
+                            minHeight: "80px",
+                          }}
+                        >
+                          <span className="material-icons" style={{ color: "#ccc", fontSize: "24px" }}>add</span>
+                          <span style={{ color: "#666", fontSize: "12px", textAlign: "center" }}>Add Icon</span>
+                        </div>
+                      )
                     )}
                     <div
                       className="card-content"
@@ -554,7 +540,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
       ));
       rows.push(<div className="row" key={`row-${i}`} style={{ display: 'flex', flexWrap: 'wrap' }}>{groupsInRow}</div>);
     }
-
+  
     return <div className="info-cards-container">{rows}</div>;
   };
 
@@ -575,7 +561,7 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
         const formattedValue = formatNumber(value);
         const conditionLabel = getConditionLabel(value, index);
         const title = titles[index] || defaultTitle;
-        const { icon, color } = icons[index];
+        const iconSettings = measureIcons[title] || { icon: '', color: '#000000' };
 
         return (
           <div
@@ -591,17 +577,17 @@ const InfoCards = ({ context, prompts, data, drillDown }: Props) => {
             }}
           >
             <div style={getIconAndTextContainerStyle()}>
-              {icon && (
-                <div onClick={() => !isDashboardView && handlePlaceholderClick(index)}>
-                  <span className="material-icons" style={getIconStyle(index)}>
-                    {icon}
+              {iconSettings.icon && (
+                <div onClick={() => !isDashboardView && handlePlaceholderClick(0, index)}>
+                  <span className="material-icons" style={getIconStyle(title)}>
+                    {iconSettings.icon}
                   </span>
                 </div>
               )}
-              {!isDashboardView && !icon && (
+              {!isDashboardView && !iconSettings.icon && (
                 <div
                   className="icon-placeholder"
-                  onClick={() => handlePlaceholderClick(index)}
+                  onClick={() => handlePlaceholderClick(0, index)}
                   style={{
                     display: "flex",
                     flexDirection: "column",
