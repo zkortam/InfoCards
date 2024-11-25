@@ -1,9 +1,64 @@
-/* add css module styles here (optional) */
+.info-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0; // Remove vertical spacing between groups
+}
 
-.test {
-  margin: 2em;
-  padding: 0.5em;
-  border: 2px solid #000;
-  font-size: 2em;
-  text-align: center;
+.grouped-cards {
+  display: flex;
+  gap: 0; // Remove horizontal spacing between cards
+  flex-wrap: wrap;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  padding: 0; // Remove internal padding
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card .material-icons {
+  font-size: 24px;
+  margin-bottom: 0; // Remove space between icon and content
+}
+
+.condition-label-container {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.condition-label {
+  padding: 0;
+  font-size: 12px;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 0; // Remove internal content padding
+}
+
+.card-title {
+  font-size: 14px;
+  margin-bottom: 0; // Remove margin between title and value
+}
+
+.card-value {
+  font-size: 24pt;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
