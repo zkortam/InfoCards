@@ -124,7 +124,8 @@
           },
           "key": "containerColor",
           "type": "color",
-          "hint": "Select the container color"
+          "hint": "Select the container color",
+          "defaultValue": "#FFFFFF"
         },
         {
           "name": {
@@ -132,9 +133,10 @@
           },
           "key": "containerOpacity",
           "type": "number",
-          "min": 1,
+          "min": 0,
           "max": 100,
-          "hint": "Select the container opacity (1-100)"
+          "hint": "Select the container opacity (1-100)",
+          "defaultValue": 100
         },
         {
           "name": {
@@ -142,7 +144,8 @@
           },
           "key": "borderColor",
           "type": "color",
-          "hint": "Select the border color"
+          "hint": "Select the border color",
+          "defaultValue": "black"
         },
         {
           "name": {
@@ -150,9 +153,10 @@
           },
           "key": "borderOpacity",
           "type": "number",
-          "min": 1,
+          "min": 0,
           "max": 100,
-          "hint": "Select the border opacity (1-100)"
+          "hint": "Select the border opacity (1-100)",
+          "defaultValue": 100
         },
         {
           "name": {
@@ -160,7 +164,8 @@
           },
           "key": "borderThickness",
           "type": "number",
-          "hint": "Select the border thickness"
+          "hint": "Select the border thickness",
+          "defaultValue": 3
         },
         {
           "name": {
@@ -168,7 +173,8 @@
           },
           "key": "borderRadius",
           "type": "number",
-          "hint": "Select the corner rounding"
+          "hint": "Select the corner rounding",
+          "defaultValue": 20
         }
       ]
     },
@@ -262,6 +268,15 @@
           "type": "number",
           "hint": "Set the spacing between groups (px)",
           "defaultValue": 20
+        },
+        {
+          "name": {
+            "key": "Show Group Labels"
+          },
+          "key": "showGroupLabels",
+          "type": "boolean",
+          "hint": "Toggle to show or hide Group labels",
+          "defaultValue": true
         },
         {
           "name": {
@@ -449,13 +464,25 @@
               "key": "conditions",
               "type": "conditional-formatting",
               "uiControlOptions": {
+                "show": {
+                  "color": {
+                    "defaultValue": "#000000",
+                    "label": "Text Color"
+                  },
+                  "backgroundColor": {
+                    "defaultValue": "#FFFFFF",
+                    "label": "Background Color"
+                  }
+                },
                 "labels": {
-                  "backgroundColor": "Progress bar"
+                  "color": "Text Color",
+                  "backgroundColor": "Background Color"
                 }
-              }
+              },
+              "hint": "Define conditions to format the text and background of the measure dynamically based on its value."
             }
           ]
-        }
+        }        
       ]
     }
   ]
