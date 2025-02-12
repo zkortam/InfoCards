@@ -460,29 +460,24 @@
           "name": "Conditional Formatting",
           "settings": [
             {
-              "name": "Conditions",
-              "key": "conditions",
+              "name": "cond",
               "type": "conditional-formatting",
+              "key": "cond",
               "uiControlOptions": {
                 "show": {
                   "color": {
-                    "defaultValue": "#000000",
-                    "label": "Text Color"
+                    "defaultValue": "red",
+                    "label": "Custom Label"
                   },
                   "backgroundColor": {
                     "defaultValue": "#FFFFFF",
                     "label": "Background Color"
                   }
-                },
-                "labels": {
-                  "color": "Text Color",
-                  "backgroundColor": "Background Color"
                 }
-              },
-              "hint": "Define conditions to format the text and background of the measure dynamically based on its value."
+              }
             }
           ]
-        }        
+        } 
       ]
     }
   ]
